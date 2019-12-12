@@ -18,6 +18,9 @@ class TestingGetMethods(unittest.TestCase):
         self.assertEqual({'id': 7, 'name': 'BBQ area 3'}, resources[6])
         self.assertEqual({'id': 8, 'name': 'BBQ area 4'}, resources[7])
 
+    def test_bookResource(self):
+        SQLiteHandler().bookResource(119607733, 101, '20.11.2019')
+
     def test_fgetResourcesByUserId(self):
         resources1: List[Dict] = SQLiteHandler().getResourcesByUserId(5)
         self.assertEqual(

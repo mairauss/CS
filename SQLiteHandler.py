@@ -1,5 +1,12 @@
 from typing import Any, List, Dict
 import sqlite3
+import logging, unittest
+
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+
+logger = logging.getLogger(__name__)
 
 class SqliteConnection:
     def __init__(self, pathToDBFile: str):
@@ -45,3 +52,12 @@ class SQLiteHandler:
                 dictObject[column] = row[index]
             resources.append(dictObject)
         return resources
+
+    def bookResource(self, userId: int, resourceId: int, date: str):
+        cursor: Any = self.getDBConnection().cursor
+        query: str = """INSERT INTO 'Reservation'('date', 'resourceId', 'reservedBy') VALUES (?, ?, ?);"""
+        data_tuple = (date, resourceId, userId)
+        cursor.execute(query, data_tuple)
+        logger.info(userId)
+        self.getDBConnection().conn.commit()
+        self.getDBConnection().conn.close()
