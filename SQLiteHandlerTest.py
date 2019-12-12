@@ -19,12 +19,40 @@ class TestingGetMethods(unittest.TestCase):
         self.assertEqual({'id': 8, 'name': 'BBQ area 4'}, resources[7])
 
     def test_fgetResourcesByUserId(self):
-        resources: List[Dict] = SQLiteHandler().getResourcesByUserId(5)
-        self.assertEqual({'resourceId': 8, 'name': 'BBQ area 4', 'reservationId': 17, 'date': '17.11.2019'}, resources[0])
-        self.assertEqual({'resourceId': 8, 'name': 'BBQ area 4', 'reservationId': 18, 'date': '18.11.2019'}, resources[1])
+        resources1: List[Dict] = SQLiteHandler().getResourcesByUserId(5)
+        self.assertEqual(
+            {
+                'resourceId': 8,
+                'name': 'BBQ area 4',
+                'reservationId': 17,
+                'date': '17.11.2019'
+            }, resources1[0])
+        self.assertEqual(
+            {
+                'resourceId': 8,
+                'name': 'BBQ area 4',
+                'reservationId': 18,
+                'date': '18.11.2019'
+            }, resources1[1])
 
+        #For Sergey
+        resources2: List[Dict] = SQLiteHandler().getResourcesByUserId(
+            1012086922)
+        self.assertEqual(
+            {
+                'resourceId': 7,
+                'name': 'BBQ area 3',
+                'reservationId': 19,
+                'date': '19.11.2019'
+            }, resources2[0])
+        self.assertEqual(
+            {
+                'resourceId': 6,
+                'name': 'BBQ area 2',
+                'reservationId': 20,
+                'date': '20.11.2019'
+            }, resources2[1])
 
-        
 
 if __name__ == '__main__':
     unittest.main()

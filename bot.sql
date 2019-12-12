@@ -57,6 +57,10 @@ INSERT INTO Reservation(date, resourceId) VALUES ("16.11.2019", 8);
 INSERT INTO Reservation(date, resourceId, reservedBy) VALUES ("17.11.2019", 8, 5);
 INSERT INTO Reservation(date, resourceId, reservedBy) VALUES ("18.11.2019", 8, 5);
 
+/* Data to test function getReservedBy for sergey */ 
+INSERT INTO Reservation(date, resourceId, reservedBy) VALUES ("19.11.2019", 7, 1012086922);
+INSERT INTO Reservation(date, resourceId, reservedBy) VALUES ("20.11.2019", 6, 1012086922);
+
 /* Select statemens used in SQLiteHandler */
 SELECT * FROM Resource;
 
