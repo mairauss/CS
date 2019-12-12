@@ -17,9 +17,8 @@ bot.
 
 import logging
 
-from telegram import (ReplyKeyboardMarkup, ReplyKeyboardRemove)
-from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters,
-                          ConversationHandler)
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,26 +30,47 @@ logger = logging.getLogger(__name__)
 # LEVEL1 are the 3 states that we get to from the main menu (viewing resources, etc)
 # LEVEL2 are the states that we cat to from LEVEL1 states
 
-START, LEVEL1, VIEW_RESOURCES_LEVEL, VIEW_BOOKINGS_LEVEL, SUPPORT_LEVEL, LEVEL3, BIO, ERROR = range(8)
+MAIN_MENU, LEVEL1, VIEW_RESOURCES_LEVEL, VIEW_BOOKINGS_LEVEL, SUPPORT_LEVEL, LEVEL3, DATE_SELECTED, DELETE_BOOKING, ERROR  = range(9)
 
+# These are the names of our session-specific variables (i.e., the indices of the stuff we want to be able to store in context.user_data array
+FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE = range(100, 103)
+
+# Main menu options
 VIEW_RESOURCES = 'View and book resources'
 VIEW_BOOKINGS = 'View and modify your bookings'
 SUPPORT = 'Send a message to support'
 END = 'End'
+# Lower-level menu options
 BACK_TO_MAIN = 'Back to main menu'
+VIEW_S_D = 'View status and description'
+VIEW_SCHEDULE = 'View schedule'
+BOOK_R = 'Book this resource'
+MODIFY_B = 'Modify'
+DELETE_B = 'Delete'
+TODAY = 'Today'
+TOMORROW = 'Tomorrow'
+LATER_DATE = 'Later date'
+YES = 'Yes'
+NO = 'No'
 
+# This function implements the main menu and gets called every time we get to the top level of our conversation
+def main_menu(update, context):
+    user = update.message.from_user
+    logger.info("User %s is at the main menu, the user name is %s, the user id is %s", user.first_name, user.username, user.id)
+    keyboard = [[VIEW_RESOURCES],[VIEW_BOOKINGS],[SUPPORT],[END]]
+    greeting = ''
+    if context.user_data.get(FIRST_TIME): # If this is the first time we're showing the main menu in this session, greet the user.
+        greeting = 'Hello, dear resident! I\'m RUBOT and I\'m here to help you book the resources of our community.\n\n'        
+    update.message.reply_text(greeting + 'What would you like to do?', reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+
+# This is the start function.It gets called only once in the beginning of each session.
 def start(update, context):
-    logger.info("User %s is at the main menu", update.message.from_user.first_name);
-    reply_keyboard = [[VIEW_RESOURCES], [VIEW_BOOKINGS], [SUPPORT], [END]]
-
-    update.message.reply_text(
-        'Hello, dear resident! I\'m RUBOT and here to help you book the resources of our community.\n\n'
-        'What would you like to do?',
-        reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-
+    context.user_data[FIRST_TIME] = True
+    main_menu(update, context)
+    context.user_data[FIRST_TIME] = False
     return LEVEL1
 
-
+# This function processes the choice made at the main menu
 def level1(update, context):
     user = update.message.from_user
     selected = update.message.text
@@ -72,61 +92,102 @@ def level1(update, context):
 
     return ERROR
 
-
+# This function processes the choice of resource made at level1
 def view_resources(update, context):
     user = update.message.from_user
     selected = update.message.text
     logger.info("User %s selected option %s", user.first_name, selected)
-    update.message.reply_text('We are now at the View Resources level')
     if selected == BACK_TO_MAIN:
-        return START
+        main_menu(update, context)
+        return LEVEL1
+    else:
+        reply_keyboard = [[VIEW_S_D], [VIEW_SCHEDULE], [BOOK_R], [BACK_TO_MAIN]]
+        update.message.reply_text('What would you like to do with ' + selected + '?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        context.user_data[CURRENT_RESOURCE] = selected
+        return LEVEL3
 
-    return LEVEL3
-
+# This function processes the choice of booking made at level1
 def view_bookings(update, context):
     user = update.message.from_user
     selected = update.message.text
     logger.info("User %s selected option %s", user.first_name, selected)
-    update.message.reply_text('We are at the View Bookings level')
     if selected == BACK_TO_MAIN:
-        return START
+        main_menu(update, context)
+        return LEVEL1
+    else:
+        reply_keyboard = [[MODIFY_B], [DELETE_B], [BACK_TO_MAIN]]
+        update.message.reply_text('Your booking \'' + selected + '\' is for Resource 1 on 31.12 20:00-03:00.\n'
+            'What would you like to do with it?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        context.user_data[CURRENT_BOOKING] = selected
+        return LEVEL3
 
-    return LEVEL3
-
+# This function processes the message to support entered by the user at level1
 def support(update, context):
-    user = update.message.from_user
-    selected = update.message.text
-    logger.info("User %s selected option %s", user.first_name, selected)
-    update.message.reply_text('We are now at the Support level')
-    if selected == BACK_TO_MAIN:
-        return START
+    logger.info("User %s has sent the following message to support: %s", update.message.from_user.first_name, update.message.text)
+    update.message.reply_text('Thank you for your message, we will get back to you soon! ' + chr(128235)) 
+    main_menu(update, context)
+    return LEVEL1
 
-    return LEVEL3
-
-
+# This function processes the choice of resource made in view_resources, OR the choice of booking made at view_bookings, OR goes back to main menu
 def level3(update, context):
     user = update.message.from_user
-    text = update.message.text
-    logger.info('User %s said ', user.first_name, text)
-    update.message.reply_text('Thank you! You said ' + text)
+    selected = update.message.text
+    logger.info('User %s selected %s', user.first_name, selected)
+    if selected == BACK_TO_MAIN:
+        main_menu(update, context)
+        return LEVEL1
+    elif selected == VIEW_S_D:
+        update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is a washing machine located in the Room 2 in the cellar. It costs €2 per a washload up to 7 kg\n'
+                                  'This resource is _operational_.\n'
+                                  'Now back to main menu...', parse_mode=ParseMode.MARKDOWN)
+        main_menu(update, context)
+        return LEVEL1
+    elif selected == VIEW_SCHEDULE:
+        update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is booked:\n'
+                                  '20.12 15:00-20:00\n21.12 09:00-10:30\n21.12 20:00-22:00\n'
+                                  'Now back to main menu...')
+        main_menu(update, context)
+        return LEVEL1
+    elif selected == BOOK_R:
+        reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
+        update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        return DATE_SELECTED
+    elif selected == MODIFY_B:
+        reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
+        update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        return DATE_SELECTED
+    elif selected == DELETE_B:
+        reply_keyboard = [[YES],[NO]]
+        update.message.reply_text('Delete booking \'' + context.user_data[CURRENT_BOOKING] + '\'?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        return DELETE_BOOKING
+    
+        
+# This function processes the result of the 1st step of date selection made at level3
+def date_selected(update, context):
+    logger.info("User %s selected the date at the first step.", update.message.from_user.first_name)
+    update.message.reply_text('You arrived at the second step of date selection. The rest is not yet implemented (and we hope to be able to use a date and time widget, anyway.\n'
+                              'Now back to main menu...');
+    main_menu(update, context)
+    return LEVEL1
 
-    return BIO
-
+# This function processes the results of "Delete booking?" Yes/No pressed at level3
+def delete_booking(update, context):
+    selected = update.message.text
+    if selected == NO:
+        main_menu(update, context)
+        return LEVEL1
+    if selected == YES:
+        logger.info("User %s is deleting booking %s.", update.message.from_user.first_name, context.user_data[CURRENT_BOOKING])
+        update.message.reply_text(context.user_data[CURRENT_BOOKING] + ' has been deleted at your request.\n'
+                              'Now back to main menu...');
+        main_menu(update, context)
+        return LEVEL1
 
 """def skip_location(update, context):
     user = update.message.from_user
     logger.info("User %s did not send a level3.", user.first_name)
     update.message.reply_text('You seem a bit paranoid! At last, tell me something about yourself.')
     return BIO"""
-
-
-def bio(update, context):
-    user = update.message.from_user
-    logger.info("User %s said %s", user.first_name, update.message.text)
-    update.message.reply_text('Thank you! You said ' + update.message.text)
-
-    return START
-
 
 def cancel(update, context):
     user = update.message.from_user
@@ -155,7 +216,7 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            START: [MessageHandler(Filters.update.message, start)],
+            #MAIN_MENU: [MessageHandler(Filters.update.message, do_nothing)],
             
             LEVEL1: [MessageHandler(Filters.update.message, level1)],
 
@@ -164,8 +225,12 @@ def main():
             VIEW_RESOURCES_LEVEL: [MessageHandler(Filters.update.message, view_resources)],
 
             LEVEL3: [MessageHandler(Filters.update.message, level3)], #CommandHandler('skip', skip_location)],
-
-            BIO: [MessageHandler(Filters.text, bio)],
+        
+            SUPPORT_LEVEL: [MessageHandler(Filters.update.message, support)],
+            
+            DATE_SELECTED: [MessageHandler(Filters.update.message, date_selected)],
+            
+            DELETE_BOOKING: [MessageHandler(Filters.update.message, delete_booking)],
             
             ERROR: [MessageHandler(Filters.update.message, error)]
         },
