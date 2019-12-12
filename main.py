@@ -15,8 +15,9 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
-import logging
-
+import logging, unittest
+from typing import Any, List, Dict
+from CS.SQLiteHandler import SQLiteHandler  # Just remove "CS." if you need
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
@@ -65,6 +66,7 @@ def main_menu(update, context):
 
 # This is the start function.It gets called only once in the beginning of each session.
 def start(update, context):
+    logger.info('=== RUBOT session started. Using the database %s', SQLiteHandler().pathToDBFile);
     context.user_data[FIRST_TIME] = True
     main_menu(update, context)
     context.user_data[FIRST_TIME] = False
@@ -76,11 +78,19 @@ def level1(update, context):
     selected = update.message.text
     logger.info("User %s selected option %s", user.first_name, selected)
     if selected == VIEW_RESOURCES:
-        reply_keyboard = [['Resource 1'], ['Resource 2'], [BACK_TO_MAIN]]
+        resources: List[Dict] = SQLiteHandler().getAllResources()
+        reply_keyboard: ReplyKeyboardMarkup = []
+        for r in resources:
+            reply_keyboard.append([r['name']])
+        reply_keyboard.append([BACK_TO_MAIN])
         update.message.reply_text('Please select a resource:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return VIEW_RESOURCES_LEVEL
     if selected == VIEW_BOOKINGS:
-        reply_keyboard = [['Booking 1'], ['Booking 2'], [BACK_TO_MAIN]]
+        bookings: List[Dict] = SQLiteHandler().getResourcesByUserId(user.id)
+        reply_keyboard: ReplyKeyboardMarkup = []
+        for b in bookings:
+            reply_keyboard.append([b['name'] + ' on ' + b['date']])
+        reply_keyboard.append([BACK_TO_MAIN])
         update.message.reply_text('Please select a booking: ', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return VIEW_BOOKINGS_LEVEL
     if selected == SUPPORT:
@@ -178,7 +188,7 @@ def delete_booking(update, context):
         return LEVEL1
     if selected == YES:
         logger.info("User %s is deleting booking %s.", update.message.from_user.first_name, context.user_data[CURRENT_BOOKING])
-        update.message.reply_text(context.user_data[CURRENT_BOOKING] + ' has been deleted at your request.\n'
+        update.message.reply_text(context.user_data[CURRENT_BOOKING] + ' has been deleted at your request (WELL, NOT YET, THIS IS STILL TBD).\n'
                               'Now back to main menu...');
         main_menu(update, context)
         return LEVEL1
