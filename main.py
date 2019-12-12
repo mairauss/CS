@@ -17,7 +17,7 @@ bot.
 
 import logging, unittest
 from typing import Any, List, Dict
-from CS.SQLiteHandler import SQLiteHandler  # Just remove "CS." if you need
+from SQLiteHandler import SQLiteHandler  
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
