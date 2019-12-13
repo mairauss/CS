@@ -15,26 +15,25 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
-import logging, unittest
+import logging, unittest, datetime
 from typing import Any, List, Dict
 from SQLiteHandler import SQLiteHandler  
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
 # Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # MAIN is the main menu
 # LEVEL1 are the 3 states that we get to from the main menu (viewing resources, etc)
 # LEVEL2 are the states that we cat to from LEVEL1 states
 
-MAIN_MENU, LEVEL1, VIEW_RESOURCES_LEVEL, VIEW_BOOKINGS_LEVEL, SUPPORT_LEVEL, LEVEL3, DATE_SELECTED, DELETE_BOOKING, ERROR  = range(9)
+(MAIN_MENU, LEVEL1, VIEW_RESOURCES_LEVEL, VIEW_BOOKINGS_LEVEL, SUPPORT_LEVEL, LEVEL3, DATE_SELECTED, TIME_ENTERED, DATE_SELECTED_LATER, 
+    DELETE_BOOKING, ERROR)  = range(11)
 
 # These are the names of our session-specific variables (i.e., the indices of the stuff we want to be able to store in context.user_data array
-FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE = range(100, 103)
+(FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE, DATE, TIME_START, TIME_END) = range(100, 103)
 
 # Main menu options
 VIEW_RESOURCES = 'View and book resources'
@@ -174,9 +173,44 @@ def level3(update, context):
         
 # This function processes the result of the 1st step of date selection made at level3
 def date_selected(update, context):
+    selected = update.message.text
     logger.info("User %s selected the date at the first step.", update.message.from_user.first_name)
-    update.message.reply_text('You arrived at the second step of date selection. The rest is not yet implemented (and we hope to be able to use a date and time widget, anyway.\n'
-                              'Now back to main menu...');
+    if selected == BACK_TO_MAIN:
+        main_menu(update, context)
+        return LEVEL1
+    elif selected == TODAY:
+        date_selected = datetime.date.today()
+        context.user_data[DATE] = date_selected
+        update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):', parse_mode=ParseMode.MARKDOWN)
+        return TIME_ENTERED
+    elif selected == TOMORROW:
+        date_selected = datetime.date.today() + datetime.timedelta(days=1)
+        context.user_data[DATE] = date_selected
+        update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):', parse_mode=ParseMode.MARKDOWN)
+        return TIME_ENTERED
+    elif selected == LATER_DATE:
+        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
+        return DATE_SELECTED_LATER
+
+
+def time_entered(update, context):
+    selected = update.message.text
+    logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
+    update.message.reply_text('You have entered the following time: ' + selected + '\n' 
+                              'From now on our bot is TBD\n'
+                              'Now back to main menu...')
+    main_menu(update, context)
+    return LEVEL1
+
+
+def date_selected_later(update, context):
+    selected = update.message.text
+    logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
+    date_selected = datetime.datetime.strptime(selected, "%d.%m").date()  # probably won't work
+    context.user_data[DATE] = date_selected
+    update.message.reply_text('You have entered the following date: ' + selected + '\n' 
+                              'From now on our bot is TBD\n'
+                              'Now back to main menu...')
     main_menu(update, context)
     return LEVEL1
 
@@ -239,6 +273,10 @@ def main():
             SUPPORT_LEVEL: [MessageHandler(Filters.update.message, support)],
             
             DATE_SELECTED: [MessageHandler(Filters.update.message, date_selected)],
+            
+            TIME_ENTERED: [MessageHandler(Filters.update.message, time_entered)],
+            
+            DATE_SELECTED_LATER: [MessageHandler(Filters.update.message, date_selected_later)],
             
             DELETE_BOOKING: [MessageHandler(Filters.update.message, delete_booking)],
             
