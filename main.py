@@ -157,9 +157,13 @@ def level3(update, context):
                                   'Now back to main menu...')
         main_menu(update, context)
         return LEVEL1
-    elif selected == BOOK_R:
+    elif selected == BOOK_R: #booking
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
-        update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        logger.info(CURRENT_BOOKING)
+        SQLiteHandler().bookResource(user.id, CURRENT_BOOKING, '20.11.2019')
+        logger.info("Booked")
+        #update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        update.message.reply_text('Booked', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_SELECTED
     elif selected == MODIFY_B:
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
