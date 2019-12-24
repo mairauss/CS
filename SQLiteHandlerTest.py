@@ -3,7 +3,7 @@ import unittest
 from SQLiteHandler import SQLiteHandler
 
 
-class TestingGetMethods(unittest.TestCase):
+class TestingDBMethods(unittest.TestCase):
     def test_pathToDBFile(self):
         self.assertEqual("./data/data.db", SQLiteHandler().pathToDBFile)
 
@@ -21,7 +21,7 @@ class TestingGetMethods(unittest.TestCase):
     def test_bookResource(self):
         SQLiteHandler().bookResource(119607733, 101, '20.11.2019')
 
-    def test_fgetResourcesByUserId(self):
+    def test_getResourcesByUserId(self):
         resources1: List[Dict] = SQLiteHandler().getResourcesByUserId(5)
         self.assertEqual(
             {

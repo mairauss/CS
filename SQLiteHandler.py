@@ -22,7 +22,8 @@ class SQLiteHandler:
         return SqliteConnection(self.pathToDBFile)
 
     def getAllResources(self) -> List[Dict]:
-        cursor: Any = self.getDBConnection().cursor
+        connection: Any = self.getDBConnection()
+        cursor: Any = connection.cursor
         resources: List[Dict] = []
         query: str = "SELECT * FROM Resource"
         cursor.execute(query)
@@ -33,10 +34,12 @@ class SQLiteHandler:
             for index, column in enumerate(columns):
                 dictObject[column] = row[index]
             resources.append(dictObject)
+        connection.conn.close()
         return resources
     
     def getResourcesByUserId(self, userId: int) -> List[Dict]:
-        cursor: Any = self.getDBConnection().cursor
+        connection: Any = self.getDBConnection()
+        cursor: Any = connection.cursor
         resources: List[Dict] = []
         query: str = """SELECT Resource.id AS resourceId, Resource.name, Reservation.id AS reservationId, date FROM Resource
                      INNER JOIN Reservation ON Resource.id = Reservation.resourceId
@@ -51,6 +54,7 @@ class SQLiteHandler:
             for index, column in enumerate(columns):
                 dictObject[column] = row[index]
             resources.append(dictObject)
+        connection.conn.close()
         return resources
 
     def bookResource(self, userId: int, resourceId: int, date: str):
