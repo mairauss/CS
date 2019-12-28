@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
     DELETE_BOOKING, ERROR)  = range(11)
 
 # These are the names of our session-specific variables (i.e., the indices of the stuff we want to be able to store in context.user_data array
-(FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE, DATE, TIME_START, TIME_END) = range(100, 103)
+(FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE, DATE, TIME_START, TIME_END) = range(100, 106)
 
 # Main menu options
 VIEW_RESOURCES = 'View and book resources'
