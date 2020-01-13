@@ -93,7 +93,7 @@ def level1(update, context):
             count += 1
         reply_keyboard.append([BACK_TO_MAIN])
         logger.info(count)
-        if count > 1: 
+        if count > 0:
             update.message.reply_text('Please select a booking: ', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
             return VIEW_BOOKINGS_LEVEL
         else:
@@ -170,10 +170,10 @@ def level3(update, context):
     elif selected == BOOK_R: #booking
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
         logger.info(CURRENT_BOOKING)
-        SQLiteHandler().bookResource(user.id, CURRENT_BOOKING, '20.11.2019')
+        # SQLiteHandler().bookResource(user.id, CURRENT_BOOKING, '20.11.2019')
         # insert sql
-        #update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        update.message.reply_text('Booked', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        # update.message.reply_text('Booked', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_SELECTED
     elif selected == MODIFY_B:
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
