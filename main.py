@@ -53,6 +53,9 @@ LATER_DATE = 'Later date'
 YES = 'Yes'
 NO = 'No'
 
+allResources = {}
+
+
 # This function implements the main menu and gets called every time we get to the top level of our conversation
 def main_menu(update, context):
     user = update.message.from_user
@@ -67,6 +70,11 @@ def main_menu(update, context):
 def start(update, context):
     logger.info('=== RUBOT session started. Using the database %s', SQLiteHandler().pathToDBFile);
     context.user_data[FIRST_TIME] = True
+
+    resources: List[Dict] = SQLiteHandler().getAllResources()
+    for r in resources:
+        allResources[r['name']] = r['id']
+
     main_menu(update, context)
     context.user_data[FIRST_TIME] = False
     return LEVEL1
@@ -81,6 +89,7 @@ def level1(update, context):
         reply_keyboard: ReplyKeyboardMarkup = []
         for r in resources:
             reply_keyboard.append([r['name']])
+
         reply_keyboard.append([BACK_TO_MAIN])
         update.message.reply_text('Please select a resource:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return VIEW_RESOURCES_LEVEL
@@ -92,7 +101,6 @@ def level1(update, context):
             reply_keyboard.append([b['name'] + ' on ' + b['date']])
             count += 1
         reply_keyboard.append([BACK_TO_MAIN])
-        logger.info(count)
         if count > 0:
             update.message.reply_text('Please select a booking: ', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
             return VIEW_BOOKINGS_LEVEL
@@ -154,10 +162,9 @@ def level3(update, context):
         main_menu(update, context)
         return LEVEL1
     elif selected == VIEW_S_D:
-        update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is a washing machine located in the Room 2 in the cellar. It costs €2 per a washload up to 7 kg\n'
-                                  'This resource is _operational_.\n'
-                                  'Now back to main menu...', parse_mode=ParseMode.MARKDOWN)
-        # getResourcesInformation from sql
+        resId = allResources[context.user_data[CURRENT_RESOURCE]]
+        update.message.reply_text('Description of \'' + context.user_data[
+            CURRENT_RESOURCE] + '\': ' + SQLiteHandler().getResourceDescription(resId), parse_mode=ParseMode.MARKDOWN)
         main_menu(update, context)
         return LEVEL1
     elif selected == VIEW_SCHEDULE:
@@ -208,8 +215,8 @@ def time_entered(update, context):
     logger.info(context.user_data[DATE])
     selected = update.message.text
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
-    logger.info(CURRENT_BOOKING)
-    SQLiteHandler().bookResource(user.id, CURRENT_BOOKING, context.user_data[DATE], selected)
+    resId = allResources[context.user_data[CURRENT_RESOURCE]]
+    SQLiteHandler().bookResource(user.id, resId, context.user_data[DATE], selected)
     update.message.reply_text('You have entered the following time: ' + selected + '\n' 
                               'From now on our bot is TBD\n'
                               'Now back to main menu...')

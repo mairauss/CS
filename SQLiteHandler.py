@@ -56,8 +56,15 @@ class SQLiteHandler:
         connection.conn.close()
         return resources
 
+    def getResourceDescription(self, resourceId: int):
+        connection: Any = self.getDBConnection()
+        cursor: Any = connection.cursor
+        query: str = "SELECT Resource.description FROM Resource WHERE Resource.id = " + str(resourceId)
+        cursor.execute(query)
+        desc = cursor.fetchone()[0]
+        return desc
+
     def bookResource(self, userId: int, resourceId: int, date: str, time: str):
-        logger.info("in bookResource")
         connection: Any = self.getDBConnection()
         cursor: Any = connection.cursor
         query: str = """INSERT INTO 'Reservation'('date', 'resourceId', 'reservedBy', 'time') VALUES (?, ?, ?, ?);"""
