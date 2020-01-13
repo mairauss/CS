@@ -64,6 +64,23 @@ class SQLiteHandler:
         desc = cursor.fetchone()[0]
         return desc
 
+    def getResourceSchedule(self, resourceId: int) -> List[Dict]:
+        connection: Any = self.getDBConnection()
+        cursor: Any = connection.cursor
+        resources: List[Dict] = []
+        query: str = "SELECT Reservation.date, Reservation.time FROM Reservation WHERE Reservation.resourceId = " + str(resourceId)
+        cursor.execute(query)
+        rows: List[List] = [x for x in cursor]
+        columns: List[str] = [x[0] for x in cursor.description]
+        for row in rows:
+            dictObject: Dict = {}
+            for index, column in enumerate(columns):
+                dictObject[column] = row[index]
+            resources.append(dictObject)
+        connection.conn.close()
+        logger.info("end of getResourceSchedule")
+        return resources
+
     def bookResource(self, userId: int, resourceId: int, date: str, time: str):
         connection: Any = self.getDBConnection()
         cursor: Any = connection.cursor

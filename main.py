@@ -168,10 +168,14 @@ def level3(update, context):
         main_menu(update, context)
         return LEVEL1
     elif selected == VIEW_SCHEDULE:
-        update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is booked:\n'
-                                  '20.12 15:00-20:00\n21.12 09:00-10:30\n21.12 20:00-22:00\n'
-                                  'Now back to main menu...')
-        # getReservationSchedule from sql
+        resId = allResources[context.user_data[CURRENT_RESOURCE]]
+        resourceSchedule: List[Dict] = SQLiteHandler().getResourceSchedule(resId)
+        strTimes = ""
+        for rs in resourceSchedule:
+            strTimes += str(rs['date']) + ", " + str(rs['time']) + '\n'
+
+        update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is booked:\n' + strTimes +
+                                  '\n' + 'Now back to main menu...')
         main_menu(update, context)
         return LEVEL1
     elif selected == BOOK_R:
@@ -187,7 +191,7 @@ def level3(update, context):
         update.message.reply_text('Delete booking \'' + context.user_data[CURRENT_BOOKING] + '\'?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DELETE_BOOKING
     
-        
+
 # This function processes the result of the 1st step of date selection made at level3
 def date_selected(update, context):
     selected = update.message.text
