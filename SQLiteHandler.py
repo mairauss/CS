@@ -42,9 +42,8 @@ class SQLiteHandler:
         cursor: Any = connection.cursor
         resources: List[Dict] = []
         query: str = """SELECT Resource.id AS resourceId, Resource.name, Reservation.id AS reservationId, date FROM Resource
-                     INNER JOIN Reservation ON Resource.id = Reservation.resourceId
+                    INNER JOIN Reservation ON Resource.id = Reservation.resourceId
                      WHERE Reservation.ReservedBy = {}"""
-        
         query = query.format(userId)
         cursor.execute(query)
         rows: List[List] = [x for x in cursor]

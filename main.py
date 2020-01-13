@@ -167,7 +167,7 @@ def level3(update, context):
         # getReservationSchedule from sql
         main_menu(update, context)
         return LEVEL1
-    elif selected == BOOK_R: #booking
+    elif selected == BOOK_R:
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
         update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_SELECTED
@@ -219,14 +219,22 @@ def time_entered(update, context):
 
 def date_selected_later(update, context):
     selected = update.message.text
+    now = datetime.datetime.now()
+    selected += "." + str(now.year)
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
-    date_selected = datetime.datetime.strptime(selected, "%d.%m").date()  # probably won't work
+    date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
     context.user_data[DATE] = date_selected
-    update.message.reply_text('You have entered the following date: ' + selected + '\n' 
-                              'From now on our bot is TBD\n'
-                              'Now back to main menu...')
-    main_menu(update, context)
-    return LEVEL1
+    logger.info(date_selected)
+    #update.message.reply_text('You have entered the following date: ' + selected + '\n'
+     #                         'From now on our bot is TBD\n'
+      #                        'Now back to main menu...')
+
+    update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):',
+                              parse_mode=ParseMode.MARKDOWN)
+    #main_menu(update, context)
+    #return LEVEL1
+    return TIME_ENTERED
+
 
 # This function processes the results of "Delete booking?" Yes/No pressed at level3
 def delete_booking(update, context):
