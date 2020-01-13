@@ -85,13 +85,21 @@ def level1(update, context):
         update.message.reply_text('Please select a resource:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return VIEW_RESOURCES_LEVEL
     if selected == VIEW_BOOKINGS:
+        count = 0
         bookings: List[Dict] = SQLiteHandler().getResourcesByUserId(user.id)
         reply_keyboard: ReplyKeyboardMarkup = []
         for b in bookings:
             reply_keyboard.append([b['name'] + ' on ' + b['date']])
+            count += 1
         reply_keyboard.append([BACK_TO_MAIN])
-        update.message.reply_text('Please select a booking: ', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        return VIEW_BOOKINGS_LEVEL
+        logger.info(count)
+        if count > 1: 
+            update.message.reply_text('Please select a booking: ', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+            return VIEW_BOOKINGS_LEVEL
+        else:
+            update.message.reply_text('You have no reservations.')
+            main_menu(update, context)
+            return LEVEL1
     if selected == SUPPORT:
         update.message.reply_text('Please give us your questions or complaints: ');
         return SUPPORT_LEVEL
@@ -149,19 +157,21 @@ def level3(update, context):
         update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is a washing machine located in the Room 2 in the cellar. It costs €2 per a washload up to 7 kg\n'
                                   'This resource is _operational_.\n'
                                   'Now back to main menu...', parse_mode=ParseMode.MARKDOWN)
+        # getResourcesInformation from sql
         main_menu(update, context)
         return LEVEL1
     elif selected == VIEW_SCHEDULE:
         update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is booked:\n'
                                   '20.12 15:00-20:00\n21.12 09:00-10:30\n21.12 20:00-22:00\n'
                                   'Now back to main menu...')
+        # getReservationSchedule from sql
         main_menu(update, context)
         return LEVEL1
     elif selected == BOOK_R: #booking
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
         logger.info(CURRENT_BOOKING)
         SQLiteHandler().bookResource(user.id, CURRENT_BOOKING, '20.11.2019')
-        logger.info("Booked")
+        # insert sql
         #update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         update.message.reply_text('Booked', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_SELECTED
@@ -254,7 +264,9 @@ def main():
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
-    updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
+    # Maira 1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8
+    # updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
+    updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
