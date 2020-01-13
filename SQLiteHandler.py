@@ -57,11 +57,15 @@ class SQLiteHandler:
         connection.conn.close()
         return resources
 
-    def bookResource(self, userId: int, resourceId: int, date: str):
-        cursor: Any = self.getDBConnection().cursor
-        query: str = """INSERT INTO 'Reservation'('date', 'resourceId', 'reservedBy') VALUES (?, ?, ?);"""
-        data_tuple = (date, resourceId, userId)
+    def bookResource(self, userId: int, resourceId: int, date: str, time: str):
+        logger.info("in bookResource")
+        connection: Any = self.getDBConnection()
+        cursor: Any = connection.cursor
+        query: str = """INSERT INTO 'Reservation'('date', 'resourceId', 'reservedBy', 'time') VALUES (?, ?, ?, ?);"""
+        data_tuple = (date, resourceId, userId, time)
         cursor.execute(query, data_tuple)
         logger.info(userId)
-        self.getDBConnection().conn.commit()
-        self.getDBConnection().conn.close()
+        connection.conn.commit()
+        connection.conn.close()
+        logger.info("booked")
+

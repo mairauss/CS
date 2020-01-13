@@ -169,11 +169,7 @@ def level3(update, context):
         return LEVEL1
     elif selected == BOOK_R: #booking
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
-        logger.info(CURRENT_BOOKING)
-        # SQLiteHandler().bookResource(user.id, CURRENT_BOOKING, '20.11.2019')
-        # insert sql
         update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        # update.message.reply_text('Booked', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_SELECTED
     elif selected == MODIFY_B:
         reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
@@ -208,8 +204,12 @@ def date_selected(update, context):
 
 
 def time_entered(update, context):
+    user = update.message.from_user
+    logger.info(context.user_data[DATE])
     selected = update.message.text
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
+    logger.info(CURRENT_BOOKING)
+    SQLiteHandler().bookResource(user.id, CURRENT_BOOKING, context.user_data[DATE], selected)
     update.message.reply_text('You have entered the following time: ' + selected + '\n' 
                               'From now on our bot is TBD\n'
                               'Now back to main menu...')
