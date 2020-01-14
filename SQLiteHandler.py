@@ -41,7 +41,7 @@ class SQLiteHandler:
         connection: Any = self.getDBConnection()
         cursor: Any = connection.cursor
         resources: List[Dict] = []
-        query: str = """SELECT Resource.id AS resourceId, Resource.name, Reservation.id AS reservationId, date FROM Resource
+        query: str = """SELECT Resource.id AS resourceId, Resource.name, Reservation.id AS reservationId, date, time FROM Resource
                     INNER JOIN Reservation ON Resource.id = Reservation.resourceId
                      WHERE Reservation.ReservedBy = {}"""
         query = query.format(userId)
@@ -78,7 +78,6 @@ class SQLiteHandler:
                 dictObject[column] = row[index]
             resources.append(dictObject)
         connection.conn.close()
-        logger.info("end of getResourceSchedule")
         return resources
 
     def bookResource(self, userId: int, resourceId: int, date: str, time: str):
@@ -92,3 +91,23 @@ class SQLiteHandler:
         connection.conn.close()
         logger.info("booked")
 
+    def deleteReservation(self, userId: int, reservationId: int):
+        connection: Any = self.getDBConnection()
+        cursor: Any = connection.cursor
+        query: str = "DELETE FROM Reservation WHERE id = " + str(reservationId) + " AND reservedBy = " + str(userId)
+        cursor.execute(query)
+        connection.conn.commit()
+        connection.conn.close()
+        logger.info("deleted")
+
+    def modifyReservation(self, userId: int, reservationId: int, date: str, time: str):
+        logger.info("in modifyReservation")
+        connection: Any = self.getDBConnection()
+        cursor: Any = connection.cursor
+        cursor.execute('''UPDATE Reservation SET time = ? WHERE id = ? AND reservedBy = ?''',
+                       (time, reservationId, userId))
+        cursor.execute('''UPDATE Reservation SET date = ? WHERE id = ? AND reservedBy = ?''',
+                       (date, reservationId, userId))
+        connection.conn.commit()
+        connection.conn.close()
+        logger.info("modified")
