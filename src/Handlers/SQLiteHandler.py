@@ -1,6 +1,8 @@
 from typing import Any, List, Dict
 import sqlite3
-import logging, unittest
+import logging
+import os
+
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -10,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 class SqliteConnection:
     def __init__(self, pathToDBFile: str):
-        self.conn: Any = sqlite3.connect(pathToDBFile)
+        self.conn: Any = sqlite3.connect(os.path.dirname(__file__) + pathToDBFile)
         self.cursor: Any = self.conn.cursor()
 
 
 class SQLiteHandler:
     def __init__(self):
-        self.pathToDBFile = "./data/data.db"
+        self.pathToDBFile = "/data/data.db"
 
     def getDBConnection(self) -> Any:
         return SqliteConnection(self.pathToDBFile)
