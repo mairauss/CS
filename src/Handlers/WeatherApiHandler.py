@@ -8,7 +8,7 @@ class WeatherApiHandler:
     def __init__(self):
         self.url: str = "http://dataservice.accuweather.com/forecasts/v1/daily/5day/31868?metric=true&apikey=QtHvzccUucsZyLMxEEgDljX7McW8U1io"
 
-    def getWeatherByDate(self, day: int, month: int, year: int) -> Dict:
+    def get_weather_by_date(self, day: int, month: int, year: int) -> Dict:
         headers: Dict = {'Accept': 'application/json'}
         req: Any = request.Request(self.url, headers=headers, method='GET')
         try:

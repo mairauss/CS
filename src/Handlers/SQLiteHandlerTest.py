@@ -8,8 +8,8 @@ class TestingDBMethods(unittest.TestCase):
     def test_pathToDBFile(self):
         self.assertEqual(os.path.dirname(__file__) + "/data/data.db", os.path.dirname(__file__) + SQLiteHandler().pathToDBFile)
 
-    def test_getAllResources(self):
-        resources: List[Dict] = SQLiteHandler().getAllResources()
+    def test_get_all_Resources(self):
+        resources: List[Dict] = SQLiteHandler().get_all_Resources()
         self.assertEqual({'description': 'test1', 'id': 1, 'name': 'Ping-pong Table 1'}, resources[0])
         self.assertEqual({'description': 'test2','id': 2, 'name': 'Ping-pong Table 2'}, resources[1])
         self.assertEqual({'description': 'test3','id': 3, 'name': 'Ping-pong Table 3'}, resources[2])
@@ -23,8 +23,8 @@ class TestingDBMethods(unittest.TestCase):
         pass
         # SQLiteHandler().bookResource(119607733, 101, '20.11.2019')
 
-    def test_getResourcesByUserId(self):
-        resources1: List[Dict] = SQLiteHandler().getResourcesByUserId(5)
+    def test_get_resources_by_user_id(self):
+        resources1: List[Dict] = SQLiteHandler().get_resources_by_user_id(5)
         self.assertEqual(
             {
                 'resourceId': 8,
@@ -43,7 +43,7 @@ class TestingDBMethods(unittest.TestCase):
             }, resources1[1])
 
         #For Sergey
-        resources2: List[Dict] = SQLiteHandler().getResourcesByUserId(
+        resources2: List[Dict] = SQLiteHandler().get_resources_by_user_id(
             1012086922)
         self.assertEqual(
             {

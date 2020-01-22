@@ -3,12 +3,12 @@ import sqlite3
 import logging
 import os
 
-
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
 
 class SqliteConnection:
     def __init__(self, pathToDBFile: str):
@@ -20,11 +20,11 @@ class SQLiteHandler:
     def __init__(self):
         self.pathToDBFile = "/data/data.db"
 
-    def getDBConnection(self) -> Any:
+    def get_db_connection(self) -> SqliteConnection:
         return SqliteConnection(self.pathToDBFile)
 
-    def getAllResources(self) -> List[Dict]:
-        connection: Any = self.getDBConnection()
+    def get_all_Resources(self) -> List[Dict]:
+        connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
         resources: List[Dict] = []
         query: str = "SELECT * FROM Resource"
@@ -38,9 +38,9 @@ class SQLiteHandler:
             resources.append(dictObject)
         connection.conn.close()
         return resources
-    
-    def getResourcesByUserId(self, userId: int) -> List[Dict]:
-        connection: Any = self.getDBConnection()
+
+    def get_resources_by_user_id(self, userId: int) -> List[Dict]:
+        connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
         resources: List[Dict] = []
         query: str = """SELECT Resource.id AS resourceId, Resource.name, Reservation.id AS reservationId, date, time FROM Resource
@@ -58,19 +58,21 @@ class SQLiteHandler:
         connection.conn.close()
         return resources
 
-    def getResourceDescription(self, resourceId: int):
-        connection: Any = self.getDBConnection()
+    def get_resource_description(self, resourceId: int):
+        connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
         query: str = "SELECT Resource.description FROM Resource WHERE Resource.id = " + str(resourceId)
         cursor.execute(query)
         desc = cursor.fetchone()[0]
+        connection.conn.close()
         return desc
 
-    def getResourceSchedule(self, resourceId: int) -> List[Dict]:
-        connection: Any = self.getDBConnection()
+    def get_resource_schedule(self, resourceId: int) -> List[Dict]:
+        connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
         resources: List[Dict] = []
-        query: str = "SELECT Reservation.date, Reservation.time FROM Reservation WHERE Reservation.resourceId = " + str(resourceId)
+        query: str = "SELECT Reservation.date, Reservation.time FROM Reservation WHERE Reservation.resourceId = " + str(
+            resourceId)
         cursor.execute(query)
         rows: List[List] = [x for x in cursor]
         columns: List[str] = [x[0] for x in cursor.description]
@@ -82,8 +84,8 @@ class SQLiteHandler:
         connection.conn.close()
         return resources
 
-    def bookResource(self, userId: int, resourceId: int, date: str, time: str):
-        connection: Any = self.getDBConnection()
+    def book_resource(self, userId: int, resourceId: int, date: str, time: str):
+        connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
         query: str = """INSERT INTO 'Reservation'('date', 'resourceId', 'reservedBy', 'time') VALUES (?, ?, ?, ?);"""
         data_tuple = (date, resourceId, userId, time)
@@ -93,8 +95,8 @@ class SQLiteHandler:
         connection.conn.close()
         logger.info("booked")
 
-    def deleteReservation(self, userId: int, reservationId: int):
-        connection: Any = self.getDBConnection()
+    def delete_reservation(self, userId: int, reservationId: int):
+        connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
         query: str = "DELETE FROM Reservation WHERE id = " + str(reservationId) + " AND reservedBy = " + str(userId)
         cursor.execute(query)
@@ -102,9 +104,9 @@ class SQLiteHandler:
         connection.conn.close()
         logger.info("deleted")
 
-    def modifyReservation(self, userId: int, reservationId: int, date: str, time: str):
+    def modify_reservation(self, userId: int, reservationId: int, date: str, time: str):
         logger.info("in modifyReservation")
-        connection: Any = self.getDBConnection()
+        connection: Any = self.get_db_connection()
         cursor: Any = connection.cursor
         cursor.execute('''UPDATE Reservation SET time = ? WHERE id = ? AND reservedBy = ?''',
                        (time, reservationId, userId))

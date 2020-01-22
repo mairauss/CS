@@ -72,7 +72,7 @@ def start(update, context):
     logger.info('=== RUBOT session started. Using the database %s', SQLiteHandler().pathToDBFile);
     context.user_data[FIRST_TIME] = True
 
-    resources: List[Dict] = SQLiteHandler().getAllResources()
+    resources: List[Dict] = SQLiteHandler().get_all_Resources()
     for r in resources:
         allResources[r['name']] = r['id']
 
@@ -86,7 +86,7 @@ def level1(update, context):
     selected = update.message.text
     logger.info("User %s selected option %s", user.first_name, selected)
     if selected == VIEW_RESOURCES:
-        resources: List[Dict] = SQLiteHandler().getAllResources()
+        resources: List[Dict] = SQLiteHandler().get_all_Resources()
         reply_keyboard: ReplyKeyboardMarkup = []
         for r in resources:
             reply_keyboard.append([r['name']])
@@ -96,7 +96,7 @@ def level1(update, context):
         return VIEW_RESOURCES_LEVEL
     if selected == VIEW_BOOKINGS:
         count = 0
-        bookings: List[Dict] = SQLiteHandler().getResourcesByUserId(user.id)
+        bookings: List[Dict] = SQLiteHandler().get_resources_by_user_id(user.id)
         reply_keyboard: ReplyKeyboardMarkup = []
         yourResources.clear()
         for b in bookings:
@@ -169,12 +169,12 @@ def level3(update, context):
     elif selected == VIEW_S_D:
         resId = allResources[context.user_data[CURRENT_RESOURCE]]
         update.message.reply_text('Description of \'' + context.user_data[
-            CURRENT_RESOURCE] + '\': ' + SQLiteHandler().getResourceDescription(resId), parse_mode=ParseMode.MARKDOWN)
+            CURRENT_RESOURCE] + '\': ' + SQLiteHandler().get_resource_description(resId), parse_mode=ParseMode.MARKDOWN)
         main_menu(update, context)
         return LEVEL1
     elif selected == VIEW_SCHEDULE:
         resId = allResources[context.user_data[CURRENT_RESOURCE]]
-        resourceSchedule: List[Dict] = SQLiteHandler().getResourceSchedule(resId)
+        resourceSchedule: List[Dict] = SQLiteHandler().get_resource_schedule(resId)
         strTimes = ""
         for rs in resourceSchedule:
             strTimes += str(rs['date']) + ", " + str(rs['time']) + '\n'
@@ -226,7 +226,7 @@ def time_entered(update, context):
     selected = update.message.text
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
     resId = allResources[context.user_data[CURRENT_RESOURCE]]
-    SQLiteHandler().bookResource(user.id, resId, context.user_data[DATE], selected)
+    SQLiteHandler().book_resource(user.id, resId, context.user_data[DATE], selected)
     update.message.reply_text('You have entered the following time: ' + selected + '\n' +
                               'Your reservation was saved! \n' +
                               'Now back to main menu...')
@@ -258,7 +258,7 @@ def time_entered_modified(update, context):
     selected = update.message.text
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
     reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
-    SQLiteHandler().modifyReservation(user.id, reservationId, context.user_data[DATE], selected)
+    SQLiteHandler().modify_reservation(user.id, reservationId, context.user_data[DATE], selected)
     update.message.reply_text('You have entered the following time: ' + selected + '\n' +
                               'Your reservation was modified! \n' +
                               'Now back to main menu...')
@@ -289,7 +289,7 @@ def delete_booking(update, context):
         user = update.message.from_user
         logger.info("User %s is deleting booking %s.", update.message.from_user.first_name, context.user_data[CURRENT_BOOKING])
         reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
-        SQLiteHandler().deleteReservation(user.id, reservationId)
+        SQLiteHandler().delete_reservation(user.id, reservationId)
         update.message.reply_text(context.user_data[CURRENT_BOOKING] + ' has been deleted. \n' +
                               'Now back to main menu...');
         main_menu(update, context)
