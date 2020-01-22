@@ -7,4 +7,4 @@ services:
       dockerfile: Bot.dockerfile
       context: .
     volumes:
-      - .:/app/
+      - ./src:/app/src
