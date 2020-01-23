@@ -225,6 +225,19 @@ def time_entered(update, context):
     logger.info(context.user_data[DATE])
     selected = update.message.text
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
+
+	# NTLK Example: https://medium.com/analytics-vidhya/building-a-simple-chatbot-in-python-using-nltk-7c8c8215ac6e
+	# General approach: Preprocess input (Special Characters/Delimiters, Tokenize), compare with synonyms
+	# Check if time input format is valid 
+	#   false: "Bad Format"
+	#     a) Did u mean ...?
+	#     b) Try again
+	#   true: as before (book, msg, main menu, return LEVEL1)
+    if selected == "1234":
+        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Try again..')
+        return TIME_ENTERED
+    #    
+	
     resId = allResources[context.user_data[CURRENT_RESOURCE]]
     SQLiteHandler().book_resource(user.id, resId, context.user_data[DATE], selected)
     update.message.reply_text('You have entered the following time: ' + selected + '\n' +
