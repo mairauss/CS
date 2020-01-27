@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # This program is dedicated to the public domain under the CC0 license.
+from _overlapped import NULL
 
 """
 This is the RUBOT Telegram bot by the CL3 group of 2019W Cooperative Systems
@@ -18,6 +19,7 @@ bot.
 import logging, unittest, datetime
 from typing import Any, List, Dict
 from Handlers.SQLiteHandler import SQLiteHandler  
+from Handlers.WeatherApiHandler import WeatherApiHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
 
@@ -55,7 +57,14 @@ NO = 'No'
 
 allResources = {}
 yourResources = {}
-
+    
+def composeWeatherForecast (booking_date : datetime.date) -> str:
+    api: WeatherApiHandler = WeatherApiHandler()
+    weather: Dict = api.get_weather_by_date(booking_date.day, booking_date.month, booking_date.year)
+    return ('The weather forecast for the date of your reservation is: _between ' 
+            + str(weather['minimum']) + '°C and ' + str(weather['maximum']) + '°C, ' + str(weather['dayMessage']) + ' during the day, ' 
+            + str(weather['nightMessage']) + ' at night._') if weather else ''
+    
 
 # This function implements the main menu and gets called every time we get to the top level of our conversation
 def main_menu(update, context):
@@ -69,7 +78,7 @@ def main_menu(update, context):
 
 # This is the start function.It gets called only once in the beginning of each session.
 def start(update, context):
-    logger.info('=== RUBOT session started. Using the database %s', SQLiteHandler().pathToDBFile);
+    logger.info('RUBOT session started.');
     context.user_data[FIRST_TIME] = True
 
     resources: List[Dict] = SQLiteHandler().get_all_Resources()
@@ -237,12 +246,14 @@ def time_entered(update, context):
         update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Try again..')
         return TIME_ENTERED
     #    
-	
+    
     resId = allResources[context.user_data[CURRENT_RESOURCE]]
     SQLiteHandler().book_resource(user.id, resId, context.user_data[DATE], selected)
-    update.message.reply_text('You have entered the following time: ' + selected + '\n' +
-                              'Your reservation was saved! \n' +
-                              'Now back to main menu...')
+    update.message.reply_text('Your reservation made for *' + context.user_data[DATE].strftime('%A, %B %d') + ', ' + selected + '* was successfully saved!',
+                              parse_mode=ParseMode.MARKDOWN)
+    forecast = composeWeatherForecast(context.user_data[DATE])
+    if forecast > '' :
+        update.message.reply_text(forecast, parse_mode=ParseMode.MARKDOWN)
     main_menu(update, context)
     return LEVEL1
 
@@ -255,10 +266,6 @@ def date_selected_later(update, context):
     date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
-    #update.message.reply_text('You have entered the following date: ' + selected + '\n'
-     #                         'From now on our bot is TBD\n'
-      #                        'Now back to main menu...')
-
     update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):',
                               parse_mode=ParseMode.MARKDOWN)
     #main_menu(update, context)
@@ -272,9 +279,11 @@ def time_entered_modified(update, context):
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
     reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
     SQLiteHandler().modify_reservation(user.id, reservationId, context.user_data[DATE], selected)
-    update.message.reply_text('You have entered the following time: ' + selected + '\n' +
-                              'Your reservation was modified! \n' +
-                              'Now back to main menu...')
+    update.message.reply_text('Your reservation was successfully modified! The new date is ' + context.user_data[DATE] + '*, the new time is *' + selected + '*',
+                              parse_mode=ParseMode.MARKDOWN)
+    forecast = composeWeatherForecast(context.user_data[DATE])
+    if forecast > '' :
+        update.message.reply_text(forecast, parse_mode=ParseMode.MARKDOWN)
     main_menu(update, context)
     return LEVEL1
 
@@ -354,6 +363,7 @@ def error(update, context):
 
 
 def main():
+    logger.info('======= RUBOT server started. Using the database %s =======', SQLiteHandler().pathToDBFile);
     # Create the Updater and pass it your bot's token.
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
