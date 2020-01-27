@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # This program is dedicated to the public domain under the CC0 license.
-from _overlapped import NULL
+#from _overlapped import NULL
 
 """
 This is the RUBOT Telegram bot by the CL3 group of 2019W Cooperative Systems
@@ -104,18 +104,17 @@ def level1(update, context):
         update.message.reply_text('Please select a resource:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return VIEW_RESOURCES_LEVEL
     if selected == VIEW_BOOKINGS:
-        count = 0
         bookings: List[Dict] = SQLiteHandler().get_resources_by_user_id(user.id)
         reply_keyboard: ReplyKeyboardMarkup = []
         yourResources.clear()
-        for b in bookings:
-            reply_keyboard.append([b['name'] + ' on ' + b['date'] + ', ' + b['time']])
-            str = b['name'] + ' on ' + b['date'] + ', ' + b['time']
-            yourResources[str] = b['reservationId']
-            count += 1
+        if len(bookings) > 0:
+            for b in bookings:
+                reply_keyboard.append([b['name'] + ' on ' + b['date'] + ', ' + b['time']])
+                shownBooking = b['name'] + ' on ' + b['date'] + ', ' + b['time']
+                yourResources[shownBooking] = b['reservationId']
 
-        reply_keyboard.append([BACK_TO_MAIN])
-        if count > 0:
+            reply_keyboard.append([BACK_TO_MAIN])
+
             update.message.reply_text('Please select a booking: ', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
             return VIEW_BOOKINGS_LEVEL
         else:
