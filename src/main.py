@@ -282,7 +282,7 @@ def time_entered_modified(update, context):
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
     reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
     SQLiteHandler().modify_reservation(user.id, reservationId, context.user_data[DATE], selected)
-    update.message.reply_text('Your reservation was successfully modified! The new date is ' + context.user_data[DATE] + '*, the new time is *' + selected + '*',
+    update.message.reply_text('Your reservation was successfully modified! The new date is *' + str(context.user_data[DATE]) + '*, the new time is *' + selected + '*',
                               parse_mode=ParseMode.MARKDOWN)
     forecast = composeWeatherForecast(context.user_data[DATE])
     if forecast > '' :
@@ -371,8 +371,8 @@ def main():
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
     # Maira 1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8
-    #updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
-    updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
+    updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
+    #updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
