@@ -107,7 +107,7 @@ def level1(update, context):
         bookings: List[Dict] = SQLiteHandler().get_resources_by_user_id(user.id)
         reply_keyboard: ReplyKeyboardMarkup = []
         yourResources.clear()
-        if len(bookings) > 0:
+        if len(bookings) > 0 and (type(bookings) == list):
             for b in bookings:
                 reply_keyboard.append([b['name'] + ' on ' + b['date'] + ', ' + b['time']])
                 shownBooking = b['name'] + ' on ' + b['date'] + ', ' + b['time']
