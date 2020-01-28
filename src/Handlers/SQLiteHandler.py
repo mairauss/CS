@@ -45,7 +45,7 @@ class SQLiteHandler:
         resources: List[Dict] = []
         query: str = """SELECT Resource.id AS resourceId, Resource.name, Reservation.id AS reservationId, date, time FROM Resource
                     INNER JOIN Reservation ON Resource.id = Reservation.resourceId
-                     WHERE Reservation.ReservedBy = {} ORDER BY date(date) DESC Limit 1 """
+                     WHERE Reservation.ReservedBy = {} ORDER BY datetime(date,time)"""
         query = query.format(userId)
         cursor.execute(query)
         rows: List[List] = [x for x in cursor]
@@ -72,7 +72,7 @@ class SQLiteHandler:
         cursor: Any = connection.cursor
         resources: List[Dict] = []
         query: str = "SELECT Reservation.date, Reservation.time FROM Reservation WHERE Reservation.resourceId = " + str(
-            resourceId) + "ORDER BY date(date) DESC Limit 1"
+            resourceId) + "ORDER BY date(date)"
         cursor.execute(query)
         rows: List[List] = [x for x in cursor]
         columns: List[str] = [x[0] for x in cursor.description]
