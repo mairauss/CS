@@ -84,16 +84,33 @@ class SQLiteHandler:
         connection.conn.close()
         return resources
 
-    def book_resource(self, userId: int, resourceId: int, date: str, time: str):
+    def is_resource_booked(self, userId: int, resourceId: int, date: str, time: str) -> bool:
         connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
-        query: str = """INSERT INTO 'Reservation'('date', 'resourceId', 'reservedBy', 'time') VALUES (?, ?, ?, ?);"""
+        query: str = """SELECT id FROM Reservation WHERE date = ? and resourceId = ? and reservedBy = ? and time = ?;"""
         data_tuple = (date, resourceId, userId, time)
         cursor.execute(query, data_tuple)
-        logger.info(userId)
-        connection.conn.commit()
+        rows: List[List] = [x for x in cursor]
         connection.conn.close()
-        logger.info("booked")
+        if len(rows) > 0:
+            return True
+        else:
+            return False
+
+    def book_resource(self, userId: int, resourceId: int, date: str, time: str) -> bool:
+        if self.is_resource_booked(userId, resourceId, date, time) is not True:
+            connection: SqliteConnection = self.get_db_connection()
+            cursor: Any = connection.cursor
+            query: str = """INSERT INTO 'Reservation'('date', 'resourceId', 'reservedBy', 'time') VALUES (?, ?, ?, ?);"""
+            data_tuple = (date, resourceId, userId, time)
+            cursor.execute(query, data_tuple)
+            logger.info(userId)
+            connection.conn.commit()
+            connection.conn.close()
+            logger.info("booked")
+            return True
+        else:
+            return False
 
     def delete_reservation(self, userId: int, reservationId: int):
         connection: SqliteConnection = self.get_db_connection()

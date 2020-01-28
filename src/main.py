@@ -247,12 +247,16 @@ def time_entered(update, context):
     #    
     
     resId = allResources[context.user_data[CURRENT_RESOURCE]]
-    SQLiteHandler().book_resource(user.id, resId, context.user_data[DATE], selected)
-    update.message.reply_text('Your reservation made for *' + context.user_data[DATE].strftime('%A, %B %d') + ', ' + selected + '* was successfully saved!',
+    isBooked: bool = SQLiteHandler().book_resource(user.id, resId, context.user_data[DATE], selected)
+    if isBooked:
+        update.message.reply_text('Your reservation made for *' + context.user_data[DATE].strftime('%A, %B %d') + ', ' + selected + '* was successfully saved!',
                               parse_mode=ParseMode.MARKDOWN)
-    forecast = composeWeatherForecast(context.user_data[DATE])
-    if forecast > '' :
-        update.message.reply_text(forecast, parse_mode=ParseMode.MARKDOWN)
+        forecast = composeWeatherForecast(context.user_data[DATE])
+        if forecast > '' :
+            update.message.reply_text(forecast, parse_mode=ParseMode.MARKDOWN)
+    else:
+        update.message.reply_text("The resource has already been booked for that time", parse_mode=ParseMode.MARKDOWN)
+
     main_menu(update, context)
     return LEVEL1
 
