@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Tuple
 import sqlite3
 import logging
 import os
@@ -72,7 +72,7 @@ class SQLiteHandler:
         cursor: Any = connection.cursor
         resources: List[Dict] = []
         query: str = "SELECT Reservation.date, Reservation.time FROM Reservation WHERE Reservation.resourceId = " + str(
-            resourceId) + "ORDER BY date(date)"
+            resourceId) + " ORDER BY date(date)"
         cursor.execute(query)
         rows: List[List] = [x for x in cursor]
         columns: List[str] = [x[0] for x in cursor.description]
@@ -96,6 +96,16 @@ class SQLiteHandler:
             return True
         else:
             return False
+
+    def get_booked_time_slots(self, date: str) -> List[str]:
+        connection: SqliteConnection = self.get_db_connection()
+        cursor: Any = connection.cursor
+        query: str = "SELECT time FROM Reservation WHERE date = '" + str(date) + "';"
+        cursor.execute(query)
+        rows: List[Tuple] = cursor.fetchall()
+        rows = [x[0] for x in rows]
+        connection.conn.close()
+        return rows
 
     def book_resource(self, userId: int, resourceId: int, date: str, time: str) -> bool:
         if self.is_resource_booked(userId, resourceId, date, time) is not True:

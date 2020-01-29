@@ -207,10 +207,12 @@ def level3(update, context):
         return DELETE_BOOKING
 
 
-def build_timeslot_keyboard() -> ReplyKeyboardMarkup:
+def build_timeslot_keyboard(date: str) -> ReplyKeyboardMarkup:
+    bookedTimeSlots: List[str] = SQLiteHandler().get_booked_time_slots(date)
     reply_keyboard: ReplyKeyboardMarkup = []
-    for timesSlot in timeSlots:
-        reply_keyboard.append([timesSlot])
+    for timeSlot in timeSlots:
+        if timeSlot not in bookedTimeSlots:
+            reply_keyboard.append([timeSlot])
     reply_keyboard.append([BACK_TO_MAIN])
     return reply_keyboard
 
@@ -225,13 +227,13 @@ def date_selected(update, context):
         date_selected = datetime.date.today()
         context.user_data[DATE] = date_selected
         update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == TOMORROW:
         date_selected = datetime.date.today() + datetime.timedelta(days=1)
         context.user_data[DATE] = date_selected
         update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == LATER_DATE:
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
@@ -248,7 +250,9 @@ def time_entered(update, context):
         return LEVEL1
 
     if selected not in timeSlots:
-        return ERROR
+        update.message.reply_text("Wrong input!", parse_mode=ParseMode.MARKDOWN)
+        main_menu(update, context)
+        return LEVEL1
 
 
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
@@ -289,7 +293,7 @@ def date_selected_later(update, context):
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
-                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
     #main_menu(update, context)
     #return LEVEL1
     return TIME_ENTERED
@@ -304,7 +308,9 @@ def time_entered_modified(update, context):
         return LEVEL1
 
     if selected not in timeSlots:
-        return ERROR
+        update.message.reply_text("Wrong input!", parse_mode=ParseMode.MARKDOWN)
+        main_menu(update, context)
+        return LEVEL1
 
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
     reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
@@ -327,7 +333,7 @@ def date_selected_later_modified(update, context):
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
-                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
 
     return TIME_MODIFIED
 
@@ -359,13 +365,13 @@ def modify_booking(update, context):
         date_selected = datetime.date.today()
         context.user_data[DATE] = date_selected
         update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
         return TIME_MODIFIED
     elif selected == TOMORROW:
         date_selected = datetime.date.today() + datetime.timedelta(days=1)
         context.user_data[DATE] = date_selected
         update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
         return TIME_MODIFIED
     elif selected == LATER_DATE:
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
@@ -389,7 +395,9 @@ def cancel(update, context):
 
 def error(update, context):
     """Log Errors caused by Updates."""
+    update.message.reply_text("Wrong input!", parse_mode=ParseMode.MARKDOWN)
     logger.warning('Update "%s" caused error "%s"', update, context.error)
+    return LEVEL1
 
 
 def main():
@@ -398,8 +406,10 @@ def main():
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
     # Maira 1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8
-    updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
-    #updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
+    # updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
+    updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
+    #updater = Updater("866551704:AAHAe01RPGg4caLlEGs3GkbpTK1eF-szyAs", use_context=True)
+
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
