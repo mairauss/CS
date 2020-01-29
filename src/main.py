@@ -129,7 +129,10 @@ def level1(update, context):
         update.message.reply_text('Bye!')
         return ConversationHandler.END
 
-    return ERROR
+    update.message.reply_text('Wrong Input!',
+                              parse_mode=ParseMode.MARKDOWN)
+    main_menu(update, context)
+    return LEVEL1
 
 # This function processes the choice of resource made at level1
 def view_resources(update, context):
@@ -140,6 +143,15 @@ def view_resources(update, context):
         main_menu(update, context)
         return LEVEL1
     else:
+        resources: List[Dict] = SQLiteHandler().get_all_Resources()
+        namesOfResources: List[str] = [x['name'] for x in resources]
+
+        if selected not in namesOfResources:
+            update.message.reply_text('Wrong Input!',
+                                      parse_mode=ParseMode.MARKDOWN)
+            main_menu(update, context)
+            return LEVEL1
+
         reply_keyboard = [[VIEW_S_D], [VIEW_SCHEDULE], [BOOK_R], [BACK_TO_MAIN]]
         update.message.reply_text('What would you like to do with ' + selected + '?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         context.user_data[CURRENT_RESOURCE] = selected
@@ -154,6 +166,14 @@ def view_bookings(update, context):
         main_menu(update, context)
         return LEVEL1
     else:
+        bookings: List[Dict] = SQLiteHandler().get_resources_by_user_id(user.id)
+        formatedBokings: List[str] = [b['name'] + ' on ' + b['date'] + ', ' + b['time'] for b in bookings]
+        if selected not in formatedBokings:
+            update.message.reply_text('Wrong Input!',
+                                      parse_mode=ParseMode.MARKDOWN)
+            main_menu(update, context)
+            return LEVEL1
+
         reply_keyboard = [[MODIFY_B], [DELETE_B], [BACK_TO_MAIN]]
         update.message.reply_text('Your booking ' + selected + '\n' +
             'What would you like to do with it?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
@@ -205,6 +225,11 @@ def level3(update, context):
         reply_keyboard = [[YES],[NO]]
         update.message.reply_text('Delete booking \'' + context.user_data[CURRENT_BOOKING] + '\'?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DELETE_BOOKING
+    else:
+        update.message.reply_text('Wrong Input!',
+                                  parse_mode=ParseMode.MARKDOWN)
+        main_menu(update, context)
+        return LEVEL1
 
 
 def build_timeslot_keyboard(date: str) -> ReplyKeyboardMarkup:
@@ -238,6 +263,11 @@ def date_selected(update, context):
     elif selected == LATER_DATE:
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER
+    else:
+        update.message.reply_text('Wrong Input!',
+                                  parse_mode=ParseMode.MARKDOWN)
+        main_menu(update, context)
+        return LEVEL1
 
 
 def time_entered(update, context):
@@ -353,6 +383,11 @@ def delete_booking(update, context):
         main_menu(update, context)
         return LEVEL1
 
+    update.message.reply_text('Wrong Input!',
+                                  parse_mode=ParseMode.MARKDOWN)
+    main_menu(update, context)
+    return LEVEL1
+
 
 # This function processes the results of "Modify booking" pressed at level3
 def modify_booking(update, context):
@@ -377,6 +412,11 @@ def modify_booking(update, context):
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
                                   parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER_MODIFIED
+    else:
+        update.message.reply_text('Wrong Input!',
+                                  parse_mode=ParseMode.MARKDOWN)
+        main_menu(update, context)
+        return LEVEL1
 
 
 """def skip_location(update, context):
@@ -397,6 +437,7 @@ def error(update, context):
     """Log Errors caused by Updates."""
     update.message.reply_text("Wrong input!", parse_mode=ParseMode.MARKDOWN)
     logger.warning('Update "%s" caused error "%s"', update, context.error)
+    main_menu(update, context)
     return LEVEL1
 
 
