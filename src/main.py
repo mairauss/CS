@@ -57,6 +57,7 @@ NO = 'No'
 
 allResources = {}
 yourResources = {}
+timeSlots: List[str] = ["9:00-11:00", "11:00-13:00", "13:00-15:00", "15:00-17:00", "17:00-19:00", "19:00-21:00"]
     
 def composeWeatherForecast (booking_date : datetime.date) -> str:
     api: WeatherApiHandler = WeatherApiHandler()
@@ -204,7 +205,14 @@ def level3(update, context):
         reply_keyboard = [[YES],[NO]]
         update.message.reply_text('Delete booking \'' + context.user_data[CURRENT_BOOKING] + '\'?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DELETE_BOOKING
-    
+
+
+def build_timeslot_keyboard() -> ReplyKeyboardMarkup:
+    reply_keyboard: ReplyKeyboardMarkup = []
+    for timesSlot in timeSlots:
+        reply_keyboard.append([timesSlot])
+    reply_keyboard.append([BACK_TO_MAIN])
+    return reply_keyboard
 
 # This function processes the result of the 1st step of date selection made at level3
 def date_selected(update, context):
@@ -216,12 +224,14 @@ def date_selected(update, context):
     elif selected == TODAY:
         date_selected = datetime.date.today()
         context.user_data[DATE] = date_selected
-        update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):', parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please select time slot: ',
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == TOMORROW:
         date_selected = datetime.date.today() + datetime.timedelta(days=1)
         context.user_data[DATE] = date_selected
-        update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):', parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please select time slot: ',
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == LATER_DATE:
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
@@ -232,6 +242,15 @@ def time_entered(update, context):
     user = update.message.from_user
     logger.info(context.user_data[DATE])
     selected = update.message.text
+
+    if selected == BACK_TO_MAIN:
+        main_menu(update, context)
+        return LEVEL1
+
+    if selected not in timeSlots:
+        return ERROR
+
+
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
 
 	# NTLK Example: https://medium.com/analytics-vidhya/building-a-simple-chatbot-in-python-using-nltk-7c8c8215ac6e
@@ -269,8 +288,8 @@ def date_selected_later(update, context):
     date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
-    update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):',
-                              parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text('Please select time slot: ',
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
     #main_menu(update, context)
     #return LEVEL1
     return TIME_ENTERED
@@ -279,10 +298,18 @@ def time_entered_modified(update, context):
     user = update.message.from_user
     logger.info(context.user_data[DATE])
     selected = update.message.text
+
+    if selected == BACK_TO_MAIN:
+        main_menu(update, context)
+        return LEVEL1
+
+    if selected not in timeSlots:
+        return ERROR
+
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
     reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
     SQLiteHandler().modify_reservation(user.id, reservationId, context.user_data[DATE], selected)
-    update.message.reply_text('Your reservation was successfully modified! The new date is *' + str(context.user_data[DATE]) + '*, the new time is *' + selected + '*',
+    update.message.reply_text('Your reservation was successfully modified! The new date is *' + context.user_data[DATE].strftime('%A, %B %d') + '*, the new time is *' + selected + '*',
                               parse_mode=ParseMode.MARKDOWN)
     forecast = composeWeatherForecast(context.user_data[DATE])
     if forecast > '' :
@@ -299,8 +326,8 @@ def date_selected_later_modified(update, context):
     date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
-    update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):',
-                              parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text('Please select time slot: ',
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
 
     return TIME_MODIFIED
 
@@ -331,14 +358,14 @@ def modify_booking(update, context):
     elif selected == TODAY:
         date_selected = datetime.date.today()
         context.user_data[DATE] = date_selected
-        update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):',
-                                  parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please select time slot: ',
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
         return TIME_MODIFIED
     elif selected == TOMORROW:
         date_selected = datetime.date.today() + datetime.timedelta(days=1)
         context.user_data[DATE] = date_selected
-        update.message.reply_text('Please enter the time as *hh:mm* (for example, 09:00 or 22:15):',
-                                  parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please select time slot: ',
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(), one_time_keyboard=True))
         return TIME_MODIFIED
     elif selected == LATER_DATE:
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
