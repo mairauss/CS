@@ -265,7 +265,7 @@ def date_selected(update, context):
                                   reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == LATER_DATE:
-        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please enter the date:', parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER
     else:
         update.message.reply_text('Wrong Input!',
@@ -332,12 +332,12 @@ def date_selected_later(update, context):
             date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
 
     except ValueError as ve:
-        update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..')
+        #update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..')
         # TODO If u meant ->dt1 write yes, else try again
         cal = parsedatetime.Calendar()
         time_struct, parse_status = cal.parse(selected)
         dt1= datetime.datetime(*time_struct[:6])     
-        update.message.reply_text(dt1.strftime("%d.%m (%Y)")+'\n Than thou shall enter "yes"')
+        update.message.reply_text('I believe you want to book on ' + dt1.strftime("%d.%m.%Y")+'\n Type "y" to confirm.')
         context.user_data[DATE_SUGGESTION] = dt1
         selected = update.message.text
         return DATE_ENTERED_INVALID
@@ -352,15 +352,13 @@ def date_selected_later(update, context):
 
 def date_entered_invalid(update, context):
     selected = update.message.text
-    if selected!="yes":
-        update.message.reply_text('U did not say yes...Back to Date')
-        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
+    if selected!="y" and selected!="yes":
+        update.message.reply_text("Date not confirmed... Let's try again" +'\nPlease enter the date:', parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER
 
     context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
-    update.message.reply_text('You shall pass')
     logger.info(date_selected)
-    update.message.reply_text('Please select time slot: ',
+    update.message.reply_text('Date confirmed. Please select time slot: ',
                               reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
 
     return TIME_ENTERED
@@ -436,9 +434,8 @@ def date_modified_invalid(update, context):
         return DATE_SELECTED_LATER
 
     context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
-    update.message.reply_text('You shall pass')
     logger.info(date_selected)
-    update.message.reply_text('Please select time slot: ',
+    update.message.reply_text('Date confirmed. Please select time slot: ',
                               reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
 
     return TIME_ENTERED
