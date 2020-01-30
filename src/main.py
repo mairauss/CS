@@ -324,7 +324,10 @@ def date_selected_later(update, context):
     selected += "." + str(now.year)
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
     try:
-        date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
+        new_date = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
+        if new_date < datetime.date.today():
+            this_year = datetime.date.today().year + 1
+            date_selected = new_date.replace(year=this_year)
 
     except ValueError as ve:
         update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..\n')
@@ -373,10 +376,19 @@ def date_selected_later_modified(update, context):
     selected = update.message.text
     now = datetime.datetime.now()
     selected += "." + str(now.year)
+
+    #datetime.datetime.strptime(selected, '%d.%m.%y').date()
+    #if selected < now().date:
+     #   selected.year = now().year + 1
+      #  selected.strftime('%d.%m.%Y')
+
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
     try:
-        date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
-    
+        new_date = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
+        if new_date < datetime.date.today():
+            this_year = datetime.date.today().year + 1
+            date_selected = new_date.replace(year=this_year)
+
     except ValueError as ve:
         update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Did u mean..\n')
         # TODO If u meant ->dt1 write yes, else try again
