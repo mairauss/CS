@@ -328,6 +328,8 @@ def date_selected_later(update, context):
         if new_date < datetime.date.today():
             this_year = datetime.date.today().year + 1
             date_selected = new_date.replace(year=this_year)
+        else:
+            date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
 
     except ValueError as ve:
         update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..\n')
@@ -388,6 +390,8 @@ def date_selected_later_modified(update, context):
         if new_date < datetime.date.today():
             this_year = datetime.date.today().year + 1
             date_selected = new_date.replace(year=this_year)
+        else:
+            date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
 
     except ValueError as ve:
         update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Did u mean..\n')
