@@ -16,7 +16,7 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
-import logging, unittest, datetime
+import logging, unittest, datetime, parsedatetime
 from typing import Any, List, Dict
 from Handlers.SQLiteHandler import SQLiteHandler  
 from Handlers.WeatherApiHandler import WeatherApiHandler
@@ -295,7 +295,7 @@ def time_entered(update, context):
 	#     b) Try again
 	#   true: as before (book, msg, main menu, return LEVEL1)
     if selected == "1234":
-        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Try again..')
+        update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Try again..')
         return TIME_ENTERED
     #    
     
@@ -319,13 +319,18 @@ def date_selected_later(update, context):
     now = datetime.datetime.now()
     selected += "." + str(now.year)
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
-    #date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
     try:
         date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
+
     except ValueError as ve:
-        #print('ValueError Raised:', ve)
-        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Try again..')
+        update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..\n')
+        # TODO If u meant ->dt1 write yes, else try again
+        cal = parsedatetime.Calendar()
+        time_struct, parse_status = cal.parse(selected)
+        dt1= datetime.datetime(*time_struct[:6])     
+        update.message.reply_text(dt1.strftime("%d.%m (%Y)"))
         return DATE_SELECTED_LATER
+
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
@@ -365,13 +370,18 @@ def date_selected_later_modified(update, context):
     now = datetime.datetime.now()
     selected += "." + str(now.year)
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
-    #date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
     try:
         date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
+    
     except ValueError as ve:
-        #print('ValueError Raised:', ve)
-        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Try again..')
-        return DATE_SELECTED_LATER    
+        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Did u mean..\n')
+        # TODO If u meant ->dt1 write yes, else try again
+        cal = parsedatetime.Calendar()
+        time_struct, parse_status = cal.parse(selected)
+        dt1= datetime.datetime(*time_struct[:6])     
+        update.message.reply_text(dt1.strftime("%d.%m  (%Y)"))
+        return DATE_SELECTED_LATER
+
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
