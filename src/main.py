@@ -32,10 +32,10 @@ logger = logging.getLogger(__name__)
 # LEVEL2 are the states that we cat to from LEVEL1 states
 
 (MAIN_MENU, LEVEL1, VIEW_RESOURCES_LEVEL, VIEW_BOOKINGS_LEVEL, SUPPORT_LEVEL, LEVEL3, DATE_SELECTED, TIME_ENTERED, DATE_SELECTED_LATER, 
-    DELETE_BOOKING, MODIFY_BOOKING, TIME_MODIFIED, DATE_SELECTED_LATER_MODIFIED, ERROR)  = range(14)
+    DELETE_BOOKING, MODIFY_BOOKING, TIME_MODIFIED, DATE_SELECTED_LATER_MODIFIED, ERROR, DATE_ENTERED_INVALID, DATE_MODIFIED_INVALID)  = range(16)
 
 # These are the names of our session-specific variables (i.e., the indices of the stuff we want to be able to store in context.user_data array
-(FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE, DATE, TIME_START, TIME_END) = range(100, 106)
+(FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE, DATE, TIME_START, TIME_END, DATE_SUGGESTION) = range(100, 107)
 
 # Main menu options
 VIEW_RESOURCES = 'View and book resources'
@@ -294,9 +294,9 @@ def time_entered(update, context):
 	#     a) Did u mean ...?
 	#     b) Try again
 	#   true: as before (book, msg, main menu, return LEVEL1)
-    if selected == "1234":
-        update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Try again..')
-        return TIME_ENTERED
+    #if selected == "1234":
+    #    update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Try again..')
+    #    return TIME_ENTERED
     #    
     
     resId = allResources[context.user_data[CURRENT_RESOURCE]]
@@ -323,13 +323,15 @@ def date_selected_later(update, context):
         date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
 
     except ValueError as ve:
-        update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..\n')
+        update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..')
         # TODO If u meant ->dt1 write yes, else try again
         cal = parsedatetime.Calendar()
         time_struct, parse_status = cal.parse(selected)
         dt1= datetime.datetime(*time_struct[:6])     
-        update.message.reply_text(dt1.strftime("%d.%m (%Y)"))
-        return DATE_SELECTED_LATER
+        update.message.reply_text(dt1.strftime("%d.%m (%Y)")+'\n Than thou shall enter "yes"')
+        context.user_data[DATE_SUGGESTION] = dt1
+        selected = update.message.text
+        return DATE_ENTERED_INVALID
 
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
@@ -338,6 +340,22 @@ def date_selected_later(update, context):
     #main_menu(update, context)
     #return LEVEL1
     return TIME_ENTERED
+
+def date_entered_invalid(update, context):
+    selected = update.message.text
+    if selected!="yes":
+        update.message.reply_text('U did not say yes...Back to Date')
+        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
+        return DATE_SELECTED_LATER
+
+    context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
+    update.message.reply_text('You shall pass')
+    logger.info(date_selected)
+    update.message.reply_text('Please select time slot: ',
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+
+    return TIME_ENTERED
+
 
 def time_entered_modified(update, context):
     user = update.message.from_user
@@ -379,15 +397,31 @@ def date_selected_later_modified(update, context):
         cal = parsedatetime.Calendar()
         time_struct, parse_status = cal.parse(selected)
         dt1= datetime.datetime(*time_struct[:6])     
-        update.message.reply_text(dt1.strftime("%d.%m  (%Y)"))
-        return DATE_SELECTED_LATER
+        update.message.reply_text(dt1.strftime("%d.%m (%Y)")+'\n Than thou shall enter "yes"')
+        context.user_data[DATE_SUGGESTION] = dt1
+        selected = update.message.text
+        return DATE_MODIFIED_INVALID
 
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
                               reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
-
     return TIME_MODIFIED
+
+def date_modified_invalid(update, context):
+    selected = update.message.text
+    if selected!="yes":
+        update.message.reply_text('U did not say yes...Back to Date')
+        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
+        return DATE_SELECTED_LATER
+
+    context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
+    update.message.reply_text('You shall pass')
+    logger.info(date_selected)
+    update.message.reply_text('Please select time slot: ',
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+
+    return TIME_ENTERED
 
 # This function processes the results of "Delete booking?" Yes/No pressed at level3
 def delete_booking(update, context):
@@ -499,6 +533,10 @@ def main():
             TIME_ENTERED: [MessageHandler(Filters.update.message, time_entered)],
             
             DATE_SELECTED_LATER: [MessageHandler(Filters.update.message, date_selected_later)],
+
+			DATE_ENTERED_INVALID: [MessageHandler(Filters.update.message, date_entered_invalid)],
+
+			DATE_MODIFIED_INVALID: [MessageHandler(Filters.update.message, date_modified_invalid)],
             
             DELETE_BOOKING: [MessageHandler(Filters.update.message, delete_booking)],
 
