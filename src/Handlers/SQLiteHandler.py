@@ -45,7 +45,7 @@ class SQLiteHandler:
         resources: List[Dict] = []
         query: str = """SELECT Resource.id AS resourceId, Resource.name, Reservation.id AS reservationId, date, time FROM Resource
                     INNER JOIN Reservation ON Resource.id = Reservation.resourceId
-                     WHERE Reservation.ReservedBy = {} ORDER BY datetime(date,time)"""
+                     WHERE Reservation.ReservedBy = {} ORDER BY date(date)"""
         query = query.format(userId)
         cursor.execute(query)
         rows: List[List] = [x for x in cursor]
