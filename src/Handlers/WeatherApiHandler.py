@@ -1,5 +1,5 @@
 from typing import Any, List, Dict
-from urllib import request, parse
+from urllib import request, parse, error
 from datetime import datetime
 import json
 
@@ -32,5 +32,5 @@ class WeatherApiHandler:
                         "IconPhrase"]
                     break
             return weather
-        except urllib.error.HTTPError as e:
+        except error.HTTPError as e:
             pass
