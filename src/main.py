@@ -473,8 +473,8 @@ def main():
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
     # Maira 1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8
-    #updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
-    updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
+    updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
+    #updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
     #updater = Updater("866551704:AAHAe01RPGg4caLlEGs3GkbpTK1eF-szyAs", use_context=True)
 
 
