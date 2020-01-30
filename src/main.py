@@ -280,7 +280,7 @@ def time_entered(update, context):
         return LEVEL1
 
     if selected not in timeSlots:
-        update.message.reply_text("Wrong input!", parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text("Wrong input! Time entered not in timeSlots", parse_mode=ParseMode.MARKDOWN)
         main_menu(update, context)
         return LEVEL1
 
@@ -319,7 +319,13 @@ def date_selected_later(update, context):
     now = datetime.datetime.now()
     selected += "." + str(now.year)
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
-    date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
+    #date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
+    try:
+        date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
+    except ValueError as ve:
+        #print('ValueError Raised:', ve)
+        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Try again..')
+        return DATE_SELECTED_LATER
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
@@ -338,7 +344,7 @@ def time_entered_modified(update, context):
         return LEVEL1
 
     if selected not in timeSlots:
-        update.message.reply_text("Wrong input!", parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text("Wrong input! Modified time entered not in time slots", parse_mode=ParseMode.MARKDOWN)
         main_menu(update, context)
         return LEVEL1
 
@@ -359,7 +365,13 @@ def date_selected_later_modified(update, context):
     now = datetime.datetime.now()
     selected += "." + str(now.year)
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
-    date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
+    #date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()  # probably won't work
+    try:
+        date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
+    except ValueError as ve:
+        #print('ValueError Raised:', ve)
+        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Try again..')
+        return DATE_SELECTED_LATER    
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
@@ -447,8 +459,8 @@ def main():
     # Make sure to set use_context=True to use the new context based callbacks
     # Post version 12 this will no longer be necessary
     # Maira 1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8
-    # updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
-    updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
+    updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
+    #updater = Updater("1012496423:AAENENi8eLcMoqd4zrFW95qQ_7YHuY9dwF8", use_context=True)
     #updater = Updater("866551704:AAHAe01RPGg4caLlEGs3GkbpTK1eF-szyAs", use_context=True)
 
 
