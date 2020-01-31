@@ -294,7 +294,7 @@ def date_selected(update, context):
                                       context.user_data[CURRENT_RESOURCE]], None), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == LATER_DATE:
-        update.message.reply_text('Please enter the date:', parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please enter the date (for example: 01.12, 15.03, 6 March, etc.):', parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER
     else:
         update.message.reply_text('Wrong Input!',
@@ -362,14 +362,13 @@ def date_selected_later(update, context):
 
     except ValueError as ve:
         # update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..')
-        # TODO If u meant ->dt1 write yes, else try again
         cal = parsedatetime.Calendar()
         time_struct, parse_status = cal.parse(selected)
         dt1 = datetime.datetime(*time_struct[:6])
-        update.message.reply_text(
-            'I believe you want to book on ' + dt1.strftime("%d.%m.%Y") + '\n Type "y" to confirm.')
-        context.user_data[DATE_SUGGESTION] = dt1
-        selected = update.message.text
+        context.user_data[DATE_SUGGESTION] = dt1.date()
+        reply_keyboard = [[YES], [NO]]
+        update.message.reply_text('I believe you want to book on ' + dt1.strftime("%d.%m.%Y"),
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_ENTERED_INVALID
 
     context.user_data[DATE] = date_selected
@@ -384,7 +383,7 @@ def date_selected_later(update, context):
 
 def date_entered_invalid(update, context):
     selected = update.message.text
-    if selected != "y" and selected != "yes":
+    if selected != YES:
         update.message.reply_text("Date not confirmed... Let's try again" + '\nPlease enter the date:',
                                   parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER
@@ -446,14 +445,14 @@ def date_selected_later_modified(update, context):
             date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
 
     except ValueError as ve:
-        update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Did u mean..\n')
-        # TODO If u meant ->dt1 write yes, else try again
+        # update.message.reply_text('Your time input could not be processed' + selected + '\n' + 'Did u mean..\n')
         cal = parsedatetime.Calendar()
         time_struct, parse_status = cal.parse(selected)
         dt1 = datetime.datetime(*time_struct[:6])
-        update.message.reply_text(dt1.strftime("%d.%m (%Y)") + '\n Than thou shall enter "yes"')
-        context.user_data[DATE_SUGGESTION] = dt1
-        selected = update.message.text
+        context.user_data[DATE_SUGGESTION] = dt1.date()
+        reply_keyboard = [[YES], [NO]]
+        update.message.reply_text('Did you choose?:' + dt1.strftime("%d.%m (%Y)") + '\n Than thou shall choose "yes"',
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_MODIFIED_INVALID
 
     context.user_data[DATE] = date_selected
@@ -467,7 +466,7 @@ def date_selected_later_modified(update, context):
 
 def date_modified_invalid(update, context):
     selected = update.message.text
-    if selected != "yes":
+    if selected != YES:
         update.message.reply_text('U did not say yes...Back to Date')
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
                                   parse_mode=ParseMode.MARKDOWN)
@@ -480,7 +479,7 @@ def date_modified_invalid(update, context):
         build_timeslot_keyboard(date=date_selected, resourceId=None, reservationId=reservationId),
         one_time_keyboard=True))
 
-    return TIME_ENTERED
+    return TIME_MODIFIED
 
 
 # This function processes the results of "Delete booking?" Yes/No pressed at level3
