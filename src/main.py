@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # This program is dedicated to the public domain under the CC0 license.
-#from _overlapped import NULL
+# from _overlapped import NULL
 
 """
 This is the RUBOT Telegram bot by the CL3 group of 2019W Cooperative Systems
@@ -17,8 +17,8 @@ bot.
 """
 
 import logging, unittest, datetime, parsedatetime
-from typing import Any, List, Dict
-from Handlers.SQLiteHandler import SQLiteHandler  
+from typing import Any, List, Dict, Optional
+from Handlers.SQLiteHandler import SQLiteHandler
 from Handlers.WeatherApiHandler import WeatherApiHandler
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
@@ -31,8 +31,10 @@ logger = logging.getLogger(__name__)
 # LEVEL1 are the 3 states that we get to from the main menu (viewing resources, etc)
 # LEVEL2 are the states that we cat to from LEVEL1 states
 
-(MAIN_MENU, LEVEL1, VIEW_RESOURCES_LEVEL, VIEW_BOOKINGS_LEVEL, SUPPORT_LEVEL, LEVEL3, DATE_SELECTED, TIME_ENTERED, DATE_SELECTED_LATER, 
-    DELETE_BOOKING, MODIFY_BOOKING, TIME_MODIFIED, DATE_SELECTED_LATER_MODIFIED, ERROR, DATE_ENTERED_INVALID, DATE_MODIFIED_INVALID)  = range(16)
+(MAIN_MENU, LEVEL1, VIEW_RESOURCES_LEVEL, VIEW_BOOKINGS_LEVEL, SUPPORT_LEVEL, LEVEL3, DATE_SELECTED, TIME_ENTERED,
+ DATE_SELECTED_LATER,
+ DELETE_BOOKING, MODIFY_BOOKING, TIME_MODIFIED, DATE_SELECTED_LATER_MODIFIED, ERROR, DATE_ENTERED_INVALID,
+ DATE_MODIFIED_INVALID) = range(16)
 
 # These are the names of our session-specific variables (i.e., the indices of the stuff we want to be able to store in context.user_data array
 (FIRST_TIME, CURRENT_BOOKING, CURRENT_RESOURCE, DATE, TIME_START, TIME_END, DATE_SUGGESTION) = range(100, 107)
@@ -58,24 +60,30 @@ NO = 'No'
 allResources = {}
 yourResources = {}
 timeSlots: List[str] = ["9:00-11:00", "11:00-13:00", "13:00-15:00", "15:00-17:00", "17:00-19:00", "19:00-21:00"]
-    
-def composeWeatherForecast (booking_date : datetime.date) -> str:
+
+
+def composeWeatherForecast(booking_date: datetime.date) -> str:
     api: WeatherApiHandler = WeatherApiHandler()
     weather: Dict = api.get_weather_by_date(booking_date.day, booking_date.month, booking_date.year)
-    return ('The weather forecast for the date of your reservation is: _between ' 
-            + str(weather['minimum']) + '°C and ' + str(weather['maximum']) + '°C, ' + str(weather['dayMessage']) + ' during the day, ' 
+    return ('The weather forecast for the date of your reservation is: _between '
+            + str(weather['minimum']) + '°C and ' + str(weather['maximum']) + '°C, ' + str(
+                weather['dayMessage']) + ' during the day, '
             + str(weather['nightMessage']) + ' at night._') if weather else ''
-    
+
 
 # This function implements the main menu and gets called every time we get to the top level of our conversation
 def main_menu(update, context):
     user = update.message.from_user
-    logger.info("User %s is at the main menu, the user name is %s, the user id is %s", user.first_name, user.username, user.id)
-    keyboard = [[VIEW_RESOURCES],[VIEW_BOOKINGS],[SUPPORT],[END]]
+    logger.info("User %s is at the main menu, the user name is %s, the user id is %s", user.first_name, user.username,
+                user.id)
+    keyboard = [[VIEW_RESOURCES], [VIEW_BOOKINGS], [SUPPORT], [END]]
     greeting = ''
-    if context.user_data.get(FIRST_TIME): # If this is the first time we're showing the main menu in this session, greet the user.
-        greeting = 'Hello, dear resident! I\'m RUBOT and I\'m here to help you book the resources of our community.\n\n'        
-    update.message.reply_text(greeting + 'What would you like to do?', reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+    if context.user_data.get(
+            FIRST_TIME):  # If this is the first time we're showing the main menu in this session, greet the user.
+        greeting = 'Hello, dear resident! I\'m RUBOT and I\'m here to help you book the resources of our community.\n\n'
+    update.message.reply_text(greeting + 'What would you like to do?',
+                              reply_markup=ReplyKeyboardMarkup(keyboard, one_time_keyboard=True))
+
 
 # This is the start function.It gets called only once in the beginning of each session.
 def start(update, context):
@@ -90,6 +98,7 @@ def start(update, context):
     context.user_data[FIRST_TIME] = False
     return LEVEL1
 
+
 # This function processes the choice made at the main menu
 def level1(update, context):
     user = update.message.from_user
@@ -102,7 +111,8 @@ def level1(update, context):
             reply_keyboard.append([r['name']])
 
         reply_keyboard.append([BACK_TO_MAIN])
-        update.message.reply_text('Please select a resource:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        update.message.reply_text('Please select a resource:',
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return VIEW_RESOURCES_LEVEL
     if selected == VIEW_BOOKINGS:
         bookings: List[Dict] = SQLiteHandler().get_resources_by_user_id(user.id)
@@ -116,7 +126,8 @@ def level1(update, context):
 
             reply_keyboard.append([BACK_TO_MAIN])
 
-            update.message.reply_text('Please select a booking: ', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+            update.message.reply_text('Please select a booking: ',
+                                      reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
             return VIEW_BOOKINGS_LEVEL
         else:
             update.message.reply_text('You have no reservations.')
@@ -133,6 +144,7 @@ def level1(update, context):
                               parse_mode=ParseMode.MARKDOWN)
     main_menu(update, context)
     return LEVEL1
+
 
 # This function processes the choice of resource made at level1
 def view_resources(update, context):
@@ -153,9 +165,11 @@ def view_resources(update, context):
             return LEVEL1
 
         reply_keyboard = [[VIEW_S_D], [VIEW_SCHEDULE], [BOOK_R], [BACK_TO_MAIN]]
-        update.message.reply_text('What would you like to do with ' + selected + '?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        update.message.reply_text('What would you like to do with ' + selected + '?',
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         context.user_data[CURRENT_RESOURCE] = selected
         return LEVEL3
+
 
 # This function processes the choice of booking made at level1
 def view_bookings(update, context):
@@ -176,16 +190,20 @@ def view_bookings(update, context):
 
         reply_keyboard = [[MODIFY_B], [DELETE_B], [BACK_TO_MAIN]]
         update.message.reply_text('Your booking ' + selected + '\n' +
-            'What would you like to do with it?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+                                  'What would you like to do with it?',
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         context.user_data[CURRENT_BOOKING] = selected
         return LEVEL3
 
+
 # This function processes the message to support entered by the user at level1
 def support(update, context):
-    logger.info("User %s has sent the following message to support: %s", update.message.from_user.first_name, update.message.text)
-    update.message.reply_text('Thank you for your message, we will get back to you soon! ' + chr(128235)) 
+    logger.info("User %s has sent the following message to support: %s", update.message.from_user.first_name,
+                update.message.text)
+    update.message.reply_text('Thank you for your message, we will get back to you soon! ' + chr(128235))
     main_menu(update, context)
     return LEVEL1
+
 
 # This function processes the choice of resource made in view_resources, OR the choice of booking made at view_bookings, OR goes back to main menu
 def level3(update, context):
@@ -209,7 +227,8 @@ def level3(update, context):
             strTimes += str(rs['date']) + ", " + str(rs['time']) + '\n'
 
         if len(strTimes) <= 0:
-            update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is not booked! \n' + 'Now back to main menu...')
+            update.message.reply_text(
+                '\'' + context.user_data[CURRENT_RESOURCE] + '\' is not booked! \n' + 'Now back to main menu...')
         else:
             update.message.reply_text('\'' + context.user_data[CURRENT_RESOURCE] + '\' is booked:\n' + strTimes +
                                       '\n' + 'Now back to main menu...')
@@ -217,17 +236,20 @@ def level3(update, context):
         main_menu(update, context)
         return LEVEL1
     elif selected == BOOK_R:
-        reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
-        update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        reply_keyboard = [[TODAY, TOMORROW], [LATER_DATE], [BACK_TO_MAIN]]
+        update.message.reply_text('Please provide a date:',
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DATE_SELECTED
     elif selected == MODIFY_B:
-        reply_keyboard = [[TODAY,TOMORROW],[LATER_DATE],[BACK_TO_MAIN]]
-        update.message.reply_text('Please provide a date:', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
-        #return DATE_SELECTED #should be modify
+        reply_keyboard = [[TODAY, TOMORROW], [LATER_DATE], [BACK_TO_MAIN]]
+        update.message.reply_text('Please provide a date:',
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        # return DATE_SELECTED #should be modify
         return MODIFY_BOOKING
     elif selected == DELETE_B:
-        reply_keyboard = [[YES],[NO]]
-        update.message.reply_text('Delete booking \'' + context.user_data[CURRENT_BOOKING] + '\'?', reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        reply_keyboard = [[YES], [NO]]
+        update.message.reply_text('Delete booking \'' + context.user_data[CURRENT_BOOKING] + '\'?',
+                                  reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
         return DELETE_BOOKING
     else:
         update.message.reply_text('Wrong Input!',
@@ -236,14 +258,19 @@ def level3(update, context):
         return LEVEL1
 
 
-def build_timeslot_keyboard(date: str) -> ReplyKeyboardMarkup:
-    bookedTimeSlots: List[str] = SQLiteHandler().get_booked_time_slots(date)
+def build_timeslot_keyboard(date: Optional[str], resourceId: Optional[int], reservationId: Optional[int]) -> ReplyKeyboardMarkup:
+    bookedTimeSlots: List[str] = []
+    if(resourceId is None) and reservationId:
+        bookedTimeSlots = SQLiteHandler().get_booked_time_slots(str(date), None, reservationId)
+    else:
+        bookedTimeSlots = SQLiteHandler().get_booked_time_slots(str(date), resourceId, None)
     reply_keyboard: ReplyKeyboardMarkup = []
     for timeSlot in timeSlots:
         if timeSlot not in bookedTimeSlots:
             reply_keyboard.append([timeSlot])
     reply_keyboard.append([BACK_TO_MAIN])
     return reply_keyboard
+
 
 # This function processes the result of the 1st step of date selection made at level3
 def date_selected(update, context):
@@ -256,13 +283,15 @@ def date_selected(update, context):
         date_selected = datetime.date.today()
         context.user_data[DATE] = date_selected
         update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected, allResources[
+                                      context.user_data[CURRENT_RESOURCE]], None), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == TOMORROW:
         date_selected = datetime.date.today() + datetime.timedelta(days=1)
         context.user_data[DATE] = date_selected
         update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected, allResources[
+                                      context.user_data[CURRENT_RESOURCE]], None), one_time_keyboard=True))
         return TIME_ENTERED
     elif selected == LATER_DATE:
         update.message.reply_text('Please enter the date:', parse_mode=ParseMode.MARKDOWN)
@@ -284,32 +313,32 @@ def time_entered(update, context):
         return LEVEL1
 
     if selected not in timeSlots:
-        update.message.reply_text("Wrong input! Time entered not in timeSlots", parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text("Wrong input! Time entered not in time slots", parse_mode=ParseMode.MARKDOWN)
         main_menu(update, context)
         return LEVEL1
 
-
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
 
-	# NTLK Example: https://medium.com/analytics-vidhya/building-a-simple-chatbot-in-python-using-nltk-7c8c8215ac6e
-	# General approach: Preprocess input (Special Characters/Delimiters, Tokenize), compare with synonyms
-	# Check if time input format is valid 
-	#   false: "Bad Format"
-	#     a) Did u mean ...?
-	#     b) Try again
-	#   true: as before (book, msg, main menu, return LEVEL1)
-    #if selected == "1234":
+    # NTLK Example: https://medium.com/analytics-vidhya/building-a-simple-chatbot-in-python-using-nltk-7c8c8215ac6e
+    # General approach: Preprocess input (Special Characters/Delimiters, Tokenize), compare with synonyms
+    # Check if time input format is valid
+    #   false: "Bad Format"
+    #     a) Did u mean ...?
+    #     b) Try again
+    #   true: as before (book, msg, main menu, return LEVEL1)
+    # if selected == "1234":
     #    update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Try again..')
     #    return TIME_ENTERED
-    #    
-    
+    #
+
     resId = allResources[context.user_data[CURRENT_RESOURCE]]
     isBooked: bool = SQLiteHandler().book_resource(user.id, resId, context.user_data[DATE], selected)
     if isBooked:
-        update.message.reply_text('Your reservation made for *' + context.user_data[DATE].strftime('%A, %B %d') + ', ' + selected + '* was successfully saved!',
-                              parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Your reservation made for *' + context.user_data[DATE].strftime(
+            '%A, %B %d') + ', ' + selected + '* was successfully saved!',
+                                  parse_mode=ParseMode.MARKDOWN)
         forecast = composeWeatherForecast(context.user_data[DATE])
-        if forecast > '' :
+        if forecast > '':
             update.message.reply_text(forecast, parse_mode=ParseMode.MARKDOWN)
     else:
         update.message.reply_text("The resource has already been booked for that time", parse_mode=ParseMode.MARKDOWN)
@@ -332,12 +361,13 @@ def date_selected_later(update, context):
             date_selected = datetime.datetime.strptime(selected, "%d.%m.%Y").date()
 
     except ValueError as ve:
-        #update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..')
+        # update.message.reply_text('Your time input could not be processed\n->' + selected + '<-\n' + 'Did u mean..')
         # TODO If u meant ->dt1 write yes, else try again
         cal = parsedatetime.Calendar()
         time_struct, parse_status = cal.parse(selected)
-        dt1= datetime.datetime(*time_struct[:6])     
-        update.message.reply_text('I believe you want to book on ' + dt1.strftime("%d.%m.%Y")+'\n Type "y" to confirm.')
+        dt1 = datetime.datetime(*time_struct[:6])
+        update.message.reply_text(
+            'I believe you want to book on ' + dt1.strftime("%d.%m.%Y") + '\n Type "y" to confirm.')
         context.user_data[DATE_SUGGESTION] = dt1
         selected = update.message.text
         return DATE_ENTERED_INVALID
@@ -345,21 +375,25 @@ def date_selected_later(update, context):
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
     update.message.reply_text('Please select time slot: ',
-                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
-    #main_menu(update, context)
-    #return LEVEL1
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected, allResources[
+                                  context.user_data[CURRENT_RESOURCE]], None), one_time_keyboard=True))
+    # main_menu(update, context)
+    # return LEVEL1
     return TIME_ENTERED
+
 
 def date_entered_invalid(update, context):
     selected = update.message.text
-    if selected!="y" and selected!="yes":
-        update.message.reply_text("Date not confirmed... Let's try again" +'\nPlease enter the date:', parse_mode=ParseMode.MARKDOWN)
+    if selected != "y" and selected != "yes":
+        update.message.reply_text("Date not confirmed... Let's try again" + '\nPlease enter the date:',
+                                  parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER
 
     context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
     logger.info(date_selected)
     update.message.reply_text('Date confirmed. Please select time slot: ',
-                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected, allResources[
+                                  context.user_data[CURRENT_RESOURCE]], None), one_time_keyboard=True))
 
     return TIME_ENTERED
 
@@ -381,10 +415,12 @@ def time_entered_modified(update, context):
     logger.info("User %s entered the following time: %s", update.message.from_user.first_name, selected)
     reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
     SQLiteHandler().modify_reservation(user.id, reservationId, context.user_data[DATE], selected)
-    update.message.reply_text('Your reservation was successfully modified! The new date is *' + context.user_data[DATE].strftime('%A, %B %d') + '*, the new time is *' + selected + '*',
-                              parse_mode=ParseMode.MARKDOWN)
+    update.message.reply_text(
+        'Your reservation was successfully modified! The new date is *' + context.user_data[DATE].strftime(
+            '%A, %B %d') + '*, the new time is *' + selected + '*',
+        parse_mode=ParseMode.MARKDOWN)
     forecast = composeWeatherForecast(context.user_data[DATE])
-    if forecast > '' :
+    if forecast > '':
         update.message.reply_text(forecast, parse_mode=ParseMode.MARKDOWN)
     main_menu(update, context)
     return LEVEL1
@@ -395,10 +431,10 @@ def date_selected_later_modified(update, context):
     now = datetime.datetime.now()
     selected += "." + str(now.year)
 
-    #datetime.datetime.strptime(selected, '%d.%m.%y').date()
-    #if selected < now().date:
-     #   selected.year = now().year + 1
-      #  selected.strftime('%d.%m.%Y')
+    # datetime.datetime.strptime(selected, '%d.%m.%y').date()
+    # if selected < now().date:
+    #   selected.year = now().year + 1
+    #  selected.strftime('%d.%m.%Y')
 
     logger.info("User %s manually entered the following date: %s", update.message.from_user.first_name, selected)
     try:
@@ -414,31 +450,38 @@ def date_selected_later_modified(update, context):
         # TODO If u meant ->dt1 write yes, else try again
         cal = parsedatetime.Calendar()
         time_struct, parse_status = cal.parse(selected)
-        dt1= datetime.datetime(*time_struct[:6])     
-        update.message.reply_text(dt1.strftime("%d.%m (%Y)")+'\n Than thou shall enter "yes"')
+        dt1 = datetime.datetime(*time_struct[:6])
+        update.message.reply_text(dt1.strftime("%d.%m (%Y)") + '\n Than thou shall enter "yes"')
         context.user_data[DATE_SUGGESTION] = dt1
         selected = update.message.text
         return DATE_MODIFIED_INVALID
 
     context.user_data[DATE] = date_selected
     logger.info(date_selected)
-    update.message.reply_text('Please select time slot: ',
-                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+    reservationId: int = yourResources[context.user_data[CURRENT_BOOKING]]
+    update.message.reply_text('Please select time slot: ', reply_markup=ReplyKeyboardMarkup(
+        build_timeslot_keyboard(date=date_selected, resourceId=None, reservationId=reservationId),
+        one_time_keyboard=True))
     return TIME_MODIFIED
+
 
 def date_modified_invalid(update, context):
     selected = update.message.text
-    if selected!="yes":
+    if selected != "yes":
         update.message.reply_text('U did not say yes...Back to Date')
-        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):', parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
+                                  parse_mode=ParseMode.MARKDOWN)
         return DATE_SELECTED_LATER
 
     context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
     logger.info(date_selected)
-    update.message.reply_text('Date confirmed. Please select time slot: ',
-                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+    reservationId: int = yourResources[context.user_data[CURRENT_BOOKING]]
+    update.message.reply_text('Please select time slot: ', reply_markup=ReplyKeyboardMarkup(
+        build_timeslot_keyboard(date=date_selected, resourceId=None, reservationId=reservationId),
+        one_time_keyboard=True))
 
     return TIME_ENTERED
+
 
 # This function processes the results of "Delete booking?" Yes/No pressed at level3
 def delete_booking(update, context):
@@ -448,16 +491,17 @@ def delete_booking(update, context):
         return LEVEL1
     if selected == YES:
         user = update.message.from_user
-        logger.info("User %s is deleting booking %s.", update.message.from_user.first_name, context.user_data[CURRENT_BOOKING])
+        logger.info("User %s is deleting booking %s.", update.message.from_user.first_name,
+                    context.user_data[CURRENT_BOOKING])
         reservationId = yourResources[context.user_data[CURRENT_BOOKING]]
         SQLiteHandler().delete_reservation(user.id, reservationId)
         update.message.reply_text(context.user_data[CURRENT_BOOKING] + ' has been deleted. \n' +
-                              'Now back to main menu...');
+                                  'Now back to main menu...');
         main_menu(update, context)
         return LEVEL1
 
     update.message.reply_text('Wrong Input!',
-                                  parse_mode=ParseMode.MARKDOWN)
+                              parse_mode=ParseMode.MARKDOWN)
     main_menu(update, context)
     return LEVEL1
 
@@ -472,14 +516,19 @@ def modify_booking(update, context):
     elif selected == TODAY:
         date_selected = datetime.date.today()
         context.user_data[DATE] = date_selected
-        update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+        reservationId: int = yourResources[context.user_data[CURRENT_BOOKING]]
+        update.message.reply_text('Please select time slot: ', reply_markup=ReplyKeyboardMarkup(
+            build_timeslot_keyboard(date=date_selected, resourceId=None, reservationId=reservationId),
+            one_time_keyboard=True))
         return TIME_MODIFIED
     elif selected == TOMORROW:
         date_selected = datetime.date.today() + datetime.timedelta(days=1)
         context.user_data[DATE] = date_selected
-        update.message.reply_text('Please select time slot: ',
-                                  reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected), one_time_keyboard=True))
+        reservationId: int = yourResources[context.user_data[CURRENT_BOOKING]]
+        update.message.reply_text('Please select time slot: ', reply_markup=ReplyKeyboardMarkup(
+            build_timeslot_keyboard(date=date_selected, resourceId=None, reservationId=reservationId),
+            one_time_keyboard=True))
+
         return TIME_MODIFIED
     elif selected == LATER_DATE:
         update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
@@ -497,6 +546,7 @@ def modify_booking(update, context):
     logger.info("User %s did not send a level3.", user.first_name)
     update.message.reply_text('You seem a bit paranoid! At last, tell me something about yourself.')
     return BIO"""
+
 
 def cancel(update, context):
     user = update.message.from_user
@@ -521,7 +571,6 @@ def main():
     # Post version 12 this will no longer be necessary
     updater = Updater("916689078:AAFfFObZ4jgmKGmMmjjmAyNgJfVP0X-qa6o", use_context=True)
 
-
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
@@ -530,28 +579,28 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            #MAIN_MENU: [MessageHandler(Filters.update.message, do_nothing)],
-            
+            # MAIN_MENU: [MessageHandler(Filters.update.message, do_nothing)],
+
             LEVEL1: [MessageHandler(Filters.update.message, level1)],
 
             VIEW_BOOKINGS_LEVEL: [MessageHandler(Filters.update.message, view_bookings)],
-            
+
             VIEW_RESOURCES_LEVEL: [MessageHandler(Filters.update.message, view_resources)],
 
-            LEVEL3: [MessageHandler(Filters.update.message, level3)], #CommandHandler('skip', skip_location)],
-        
+            LEVEL3: [MessageHandler(Filters.update.message, level3)],  # CommandHandler('skip', skip_location)],
+
             SUPPORT_LEVEL: [MessageHandler(Filters.update.message, support)],
-            
+
             DATE_SELECTED: [MessageHandler(Filters.update.message, date_selected)],
-            
+
             TIME_ENTERED: [MessageHandler(Filters.update.message, time_entered)],
-            
+
             DATE_SELECTED_LATER: [MessageHandler(Filters.update.message, date_selected_later)],
 
-			DATE_ENTERED_INVALID: [MessageHandler(Filters.update.message, date_entered_invalid)],
+            DATE_ENTERED_INVALID: [MessageHandler(Filters.update.message, date_entered_invalid)],
 
-			DATE_MODIFIED_INVALID: [MessageHandler(Filters.update.message, date_modified_invalid)],
-            
+            DATE_MODIFIED_INVALID: [MessageHandler(Filters.update.message, date_modified_invalid)],
+
             DELETE_BOOKING: [MessageHandler(Filters.update.message, delete_booking)],
 
             MODIFY_BOOKING: [MessageHandler(Filters.update.message, modify_booking)],

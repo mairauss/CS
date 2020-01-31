@@ -29,15 +29,18 @@ class WeatherApiHandler:
                         and (year == forecastYear)):
                     temperature: float = forecast['main']['temp']
                     temperatures.append(temperature)
-                    if((time == '22:00:00') or (time == '00:00:00') or (time == '03:00:00') or (time == '06:00:00')):
+                    if((time == '21:00:00') or (time == '00:00:00') or (time == '03:00:00') or (time == '06:00:00')):
                         nightMessage = forecast['weather'][0]['description']
                     else:
                         dayMessage = forecast['weather'][0]['description']
 
-            weather["minimum"]: float = round(min(temperatures))
-            weather["maximum"]: float = round(max(temperatures))
-            weather["dayMessage"]: str = nightMessage
-            weather["nightMessage"]: str = dayMessage
-            return weather
+            if(len(temperatures) > 0):
+                weather["minimum"]: float = round(min(temperatures))
+                weather["maximum"]: float = round(max(temperatures))
+                weather["dayMessage"]: str = nightMessage
+                weather["nightMessage"]: str = dayMessage
+                return weather
+            else:
+                return {}
         except error.HTTPError as e:
             pass

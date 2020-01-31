@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Tuple
+from typing import Any, List, Dict, Tuple, Optional
 import sqlite3
 import logging
 import os
@@ -97,12 +97,17 @@ class SQLiteHandler:
         else:
             return False
 
-    def get_booked_time_slots(self, date: str) -> List[str]:
+    def get_booked_time_slots(self, date: str, resourceId: Optional[int], reservationId: Optional[int]) -> List[str]:
         connection: SqliteConnection = self.get_db_connection()
         cursor: Any = connection.cursor
-        query: str = "SELECT time FROM Reservation WHERE date = '" + str(date) + "';"
-        cursor.execute(query)
-        rows: List[Tuple] = cursor.fetchall()
+        if (resourceId is None) and reservationId:
+            query: str = "SELECT resourceId FROM Reservation WHERE id = '{}';".format(reservationId)
+            cursor.execute(query)
+            resourceId = cursor.fetchone()[0]
+        query: str = """SELECT time FROM Reservation WHERE date = ? and resourceId = ?;"""
+        data_tuple = (date, resourceId)
+        cursor.execute(query, data_tuple)
+        rows: List[str] = cursor.fetchall()
         rows = [x[0] for x in rows]
         connection.conn.close()
         return rows
