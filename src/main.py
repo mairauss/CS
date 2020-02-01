@@ -380,7 +380,7 @@ def date_entered_invalid(update, context):
     context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
     logger.info(date_selected)
     update.message.reply_text('Date confirmed. Please select time slot: ',
-                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(date_selected, allResources[
+                              reply_markup=ReplyKeyboardMarkup(build_timeslot_keyboard(context.user_data[DATE], allResources[
                                   context.user_data[CURRENT_RESOURCE]], None), one_time_keyboard=True))
 
     return TIME_ENTERED
@@ -468,7 +468,7 @@ def date_modified_invalid(update, context):
         
     reservationId: int = yourResources[context.user_data[CURRENT_BOOKING]]
     update.message.reply_text('Please select time slot: ', reply_markup=ReplyKeyboardMarkup(
-        build_timeslot_keyboard(date=date_selected, resourceId=None, reservationId=reservationId),
+        build_timeslot_keyboard(date=context.user_data[DATE], resourceId=None, reservationId=reservationId),
         one_time_keyboard=True))
 
     return TIME_MODIFIED
