@@ -352,6 +352,8 @@ def date_selected_later(update, context):
     except ValueError as ve:
         time_struct, parse_status = our_calendar.parse(selected)
         dt1 = datetime.datetime(*time_struct[:6])
+        if dt1.date() < datetime.date.today():
+            dt1 = dt1.replace(year=dt1.year + 1)
         context.user_data[DATE_SUGGESTION] = dt1.date()
         reply_keyboard = [[YES], [NO]]
         update.message.reply_text('I believe you want to book on ' + dt1.strftime("%d.%m.%Y"),
@@ -434,6 +436,8 @@ def date_selected_later_modified(update, context):
     except ValueError as ve:
         time_struct, parse_status = our_calendar.parse(selected)
         dt1 = datetime.datetime(*time_struct[:6])
+        if dt1.date() < datetime.date.today():
+            dt1 = dt1.replace(year=dt1.year + 1)
         context.user_data[DATE_SUGGESTION] = dt1.date()
         reply_keyboard = [[YES], [NO]]
         update.message.reply_text('Did you choose ' + dt1.strftime("%d.%m.%Y") + '?',
@@ -452,13 +456,16 @@ def date_selected_later_modified(update, context):
 def date_modified_invalid(update, context):
     selected = update.message.text
     if selected != YES:
-        update.message.reply_text('You did not say yes...Back to Date')
-        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
-                                  parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('You did not confirm.\nPlease enter the date:')
         return DATE_SELECTED_LATER
 
     context.user_data[DATE] = context.user_data[DATE_SUGGESTION]
     logger.info(date_selected)
+    if context.user_data[DATE] < datetime.date.today() :
+        logger.info("The date selected is in the past.")
+        update.message.reply_text('Unfortunately, the selected date is already in the past.\nPlease enter the date:')
+        return DATE_SELECTED_LATER
+        
     reservationId: int = yourResources[context.user_data[CURRENT_BOOKING]]
     update.message.reply_text('Please select time slot: ', reply_markup=ReplyKeyboardMarkup(
         build_timeslot_keyboard(date=date_selected, resourceId=None, reservationId=reservationId),
@@ -511,8 +518,7 @@ def modify_booking(update, context):
             one_time_keyboard=True))
         return TIME_MODIFIED
     elif selected == LATER_DATE:
-        update.message.reply_text('Please enter the date as *dd.mm* (for example, 01.12 or 15.03):',
-                                  parse_mode=ParseMode.MARKDOWN)
+        update.message.reply_text('Please enter the date:')
         return DATE_SELECTED_LATER_MODIFIED
     else:
         update.message.reply_text('Wrong input!')
